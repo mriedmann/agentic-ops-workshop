@@ -24,7 +24,9 @@ RevealJS wird lokal installiert; die Präsentation benötigt während des Worksh
 ./scripts/render-animations.sh
 ```
 
-Die MP4-Dateien landen in `media/`. Ohne gerenderte Videos zeigt die Präsentation an deren Stelle einen beschrifteten Fallback. Manim benötigt unter Linux unter anderem FFmpeg, Cairo und Pango; abhängig von der Distribution können zusätzliche Systempakete nötig sein.
+Die MP4-Dateien landen in `media/`, zusammen mit je einer `*.steps.json` mit den Haltepunkten.
+
+Die Videos laufen nicht automatisch, sondern werden per Klick weitergeschaltet. In `animations.py` beendet `self.step()` einen Hauptschritt einer Szene. In `index.html` spielt ein Fragment mit `data-video-step="N"` das Video bis Haltepunkt N; unsichtbare Schritte sind `<span class="fragment video-step" data-video-step="N"></span>`. `npm run check` meldet, wenn Fragmente und Haltepunkte nicht zusammenpassen. Ohne gerenderte Videos zeigt die Präsentation an deren Stelle einen beschrifteten Fallback. Manim benötigt unter Linux unter anderem FFmpeg, Cairo und Pango; abhängig von der Distribution können zusätzliche Systempakete nötig sein.
 
 Für einen schnellen Einzeltest:
 

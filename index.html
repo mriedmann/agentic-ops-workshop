@@ -107,14 +107,16 @@
           <div class="video-copy">
             <div class="eyebrow">SCHRITT 1 · TOKEN</div>
             <h2>Text wird<br /><span class="accent">adressierbar</span></h2>
+            <span class="fragment video-step" data-video-step="1"></span>
             <ul class="clean-list">
-              <li class="fragment">Textstücke, nicht zwingend Wörter</li>
-              <li class="fragment">Jedes Token erhält eine ID</li>
-              <li class="fragment">IDs werden zu Vektoren</li>
+              <li class="fragment" data-video-step="2">Textstücke, nicht zwingend Wörter</li>
+              <li class="fragment" data-video-step="3">Jedes Token erhält eine ID</li>
+              <li class="fragment" data-video-step="4">IDs werden zu Vektoren</li>
             </ul>
+            <span class="fragment video-step" data-video-step="5"></span>
           </div>
           <div class="media-frame">
-            <video data-autoplay loop muted playsinline poster="media/token-pipeline-poster.png">
+            <video muted playsinline preload="none" data-steps="media/token-pipeline.steps.json">
               <source src="media/token-pipeline.mp4" type="video/mp4" />
             </video>
             <div class="media-fallback">Animation nach <code>./scripts/render-animations.sh</code></div>
@@ -147,10 +149,11 @@
             <div class="eyebrow">SCHRITT 3 · ATTENTION</div>
             <h2>Dynamisches<br /><span class="accent">Kontext-Routing</span></h2>
             <p>Jedes Token gewichtet, welche anderen Tokens für seine aktuelle Repräsentation relevant sind.</p>
-            <div class="mini-callout fragment">Viele Attention-Heads lernen unterschiedliche Beziehungen parallel.</div>
+            <span class="fragment video-step" data-video-step="1"></span><span class="fragment video-step" data-video-step="2"></span><span class="fragment video-step" data-video-step="3"></span>
+            <div class="mini-callout fragment" data-video-step="4">Viele Attention-Heads lernen unterschiedliche Beziehungen parallel.</div>
           </div>
           <div class="media-frame">
-            <video data-autoplay loop muted playsinline poster="media/attention-ops-poster.png">
+            <video muted playsinline preload="none" data-steps="media/attention-ops.steps.json">
               <source src="media/attention-ops.mp4" type="video/mp4" />
             </video>
             <div class="media-fallback">Manim · Self-Attention</div>
@@ -184,10 +187,11 @@
             <div class="eyebrow">SCHRITT 4 · DECODE</div>
             <h2>Wahrscheinlich,<br />nicht <span class="accent">gewiss</span></h2>
             <p>Aus Scores wird eine Verteilung. Ein Auswahlverfahren bestimmt das nächste Token.</p>
+            <span class="fragment video-step" data-video-step="1"></span><span class="fragment video-step" data-video-step="2"></span><span class="fragment video-step" data-video-step="3"></span>
             <div class="temperature fragment"><span>deterministischer</span><i></i><span>variabler</span></div>
           </div>
           <div class="media-frame">
-            <video data-autoplay loop muted playsinline poster="media/next-token-poster.png">
+            <video muted playsinline preload="none" data-steps="media/next-token.steps.json">
               <source src="media/next-token.mp4" type="video/mp4" />
             </video>
             <div class="media-fallback">Manim · Next-Token-Verteilung</div>
@@ -299,13 +303,14 @@
             <div class="eyebrow">AGENT-LOOP</div>
             <h2>Entscheiden.<br />Handeln. <span class="accent">Prüfen.</span></h2>
             <ul class="clean-list">
-              <li class="fragment">Ziel + Zustand</li>
-              <li class="fragment">Tools + Policies</li>
-              <li class="fragment">Budget + Stop-Bedingung</li>
+              <li class="fragment" data-video-step="1">Ziel + Zustand</li>
+              <li class="fragment" data-video-step="2">Tools + Policies</li>
+              <li class="fragment" data-video-step="3">Budget + Stop-Bedingung</li>
             </ul>
+            <span class="fragment video-step" data-video-step="4"></span>
           </div>
           <div class="media-frame">
-            <video data-autoplay loop muted playsinline poster="media/agent-loop-poster.png">
+            <video muted playsinline preload="none" data-steps="media/agent-loop.steps.json">
               <source src="media/agent-loop.mp4" type="video/mp4" />
             </video>
             <div class="media-fallback">Manim · Agent-Loop</div>
@@ -360,9 +365,10 @@
             <div class="eyebrow">SHOWCASE-ARCHITEKTUR</div>
             <h2>Zwei Pfade.<br />Mehrere <span class="accent">Grenzen.</span></h2>
             <p>Modellzugriff und Toolzugriff brauchen jeweils eigene Identität, Policy und Telemetrie.</p>
+            <span class="fragment video-step" data-video-step="1"></span><span class="fragment video-step" data-video-step="2"></span><span class="fragment video-step" data-video-step="3"></span>
           </div>
           <div class="media-frame">
-            <video data-autoplay loop muted playsinline poster="media/trust-boundary-poster.png">
+            <video muted playsinline preload="none" data-steps="media/trust-boundary.steps.json">
               <source src="media/trust-boundary.mp4" type="video/mp4" />
             </video>
             <div class="media-fallback">Manim · Trust Boundaries</div>

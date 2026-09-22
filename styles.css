@@ -210,6 +210,7 @@ body,
 .media-frame video { display: block; min-height: 405px; object-fit: contain; width: 100%; }
 .media-fallback { align-items: center; color: var(--muted); display: none; font-size: 0.46em; inset: 0; justify-content: center; position: absolute; }
 .media-frame.missing video { visibility: hidden; }
+.video-step { display: none; }
 .media-frame.missing .media-fallback { display: flex; }
 .clean-list { list-style: none !important; margin: 28px 0 0 !important; padding: 0 !important; }
 .clean-list li { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.52em; padding: 13px 0 13px 23px; position: relative; }

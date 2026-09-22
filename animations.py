@@ -1,10 +1,17 @@
-"""Short, silent Manim loops used by the RevealJS deck.
+"""Short, silent Manim scenes used by the RevealJS deck.
 
 Render all scenes with:
-    uv run manim -qm --format=mp4 animations.py
+    ./scripts/render-animations.sh
+
+Each scene marks its main steps with ``self.step()``. The step timestamps are
+written to ``media/<slug>.steps.json``; the deck plays the video from stop to
+stop on each click instead of running it as a loop.
 """
 
 from __future__ import annotations
+
+import json
+from pathlib import Path
 
 import numpy as np
 from manim import (
@@ -61,6 +68,66 @@ CORAL = "#ff6b6b"
 PANEL = "#0d2035"
 EDGE = "#21405d"
 
+MEDIA_DIR = Path(__file__).parent / "media"
+
+
+# Running example used by all LLM basics slides (token → … → next token).
+# Token IDs are real o200k_base IDs (GPT-4o tokenizer), reproducible with:
+#   uv run --with tiktoken python -c "import tiktoken; e = tiktoken.get_encoding('o200k_base'); \
+#     print([(e.decode([i]), i) for i in e.encode('Aus dem kleinen Setzling wurde ein großer')])"
+EXAMPLE_TOKENIZER = "o200k_base"
+EXAMPLE_PROMPT = "Aus dem kleinen Setzling wurde ein großer"
+EXAMPLE_TOKENS = [
+    ("Aus", 57115),
+    (" dem", 2019),
+    (" kleinen", 42535),
+    (" Set", 3957),
+    ("z", 89),
+    ("ling", 3321),
+    (" wurde", 11653),
+    (" ein", 1605),
+    (" großer", 86085),
+]
+EXAMPLE_ANSWER = " Baum"
+
+# Next-token candidates (each a single o200k_base token) with illustrative logits.
+# The values are made up for teaching; probabilities are derived via softmax so
+# that temperature can be shown consistently.
+EXAMPLE_CANDIDATES = [
+    (" Baum", 70581, 6.1),
+    (" Busch", 151135, 4.6),
+    (" Wald", 57653, 4.1),
+    (" Mann", 23959, 3.8),
+    (" Erfolg", 62279, 3.0),
+]
+
+
+def softmax(logits: list[float], temperature: float = 1.0) -> list[float]:
+    scaled = np.array(logits) / temperature
+    weights = np.exp(scaled - scaled.max())
+    return list(weights / weights.sum())
+
+
+class SteppedScene(Scene):
+    """Scene whose main steps become click stops in the deck."""
+
+    slug: str = ""
+
+    def setup(self):
+        self.stops: list[float] = []
+
+    def step(self, hold: float = 0.3):
+        """End a main step: hold the frame briefly and record a stop in the middle of the hold."""
+        self.wait(hold)
+        self.stops.append(round(self.renderer.time - hold / 2, 3))
+
+    def tear_down(self):
+        if not config.write_to_movie or not self.slug:
+            return
+        MEDIA_DIR.mkdir(exist_ok=True)
+        data = {"stops": self.stops, "duration": round(self.renderer.time, 3)}
+        (MEDIA_DIR / f"{self.slug}.steps.json").write_text(json.dumps(data, indent=2) + "\n")
+
 
 def heading(text: str, kicker: str) -> VGroup:
     small = Text(kicker.upper(), font_size=18, color=CYAN, weight="BOLD")
@@ -88,14 +155,17 @@ def flow_arrow(start, end, color=CYAN) -> Arrow:
     return Arrow(start, end, buff=0.12, color=color, stroke_width=3, max_tip_length_to_length_ratio=0.16)
 
 
-class TokenPipeline(Scene):
+class TokenPipeline(SteppedScene):
     """Text is split into token IDs and mapped to vectors."""
+
+    slug = "token-pipeline"
 
     def construct(self):
         title = heading("Text wird zu Zahlen", "LLM · Eingabe")
         sentence = Text("Der Pod startet nicht.", font_size=42, color=INK)
         sentence.move_to(UP * 1.75)
         self.play(FadeIn(title, shift=DOWN * 0.15), Write(sentence), run_time=0.9)
+        self.step()
 
         token_words = ["Der", " Pod", " startet", " nicht", "."]
         token_ids = ["510", "18422", "7912", "902", "13"]
@@ -106,6 +176,7 @@ class TokenPipeline(Scene):
 
         self.play(GrowArrow(arrow1), run_time=0.35)
         self.play(LaggedStart(*[GrowFromCenter(token) for token in tokens], lag_ratio=0.12), run_time=1.0)
+        self.step()
 
         ids = VGroup()
         id_lines = VGroup()
@@ -115,6 +186,7 @@ class TokenPipeline(Scene):
             ids.add(ident)
             id_lines.add(Line(token.get_bottom(), ident.get_top(), color=color, stroke_opacity=0.5))
         self.play(Create(id_lines), FadeIn(ids, shift=DOWN * 0.1), run_time=0.7)
+        self.step()
 
         vector_box = RoundedRectangle(
             width=11.7,
@@ -146,15 +218,18 @@ class TokenPipeline(Scene):
         arrow2 = flow_arrow(ids.get_bottom(), vector_box.get_top())
         self.play(GrowArrow(arrow2), FadeIn(vector_box), FadeIn(vector_label), run_time=0.55)
         self.play(LaggedStart(*[FadeIn(vector, shift=UP * 0.2) for vector in vectors], lag_ratio=0.12), run_time=0.9)
+        self.step()
 
         note = Text("Tokens sind Textstücke — keine Wörter und keine Bedeutung an sich.", font_size=22, color=MUTED)
         note.to_edge(DOWN, buff=0.26)
         self.play(FadeIn(note), run_time=0.45)
-        self.wait(1.2)
+        self.step()
 
 
-class AttentionOps(Scene):
+class AttentionOps(SteppedScene):
     """Attention is visualized as contextual routing between tokens."""
+
+    slug = "attention-ops"
 
     def construct(self):
         title = heading("Kontext wird gewichtet", "Transformer · Self-Attention")
@@ -167,11 +242,13 @@ class AttentionOps(Scene):
         items = VGroup(*[pill(word, color) for word, color in zip(words, colors)])
         items.arrange(RIGHT, buff=0.25).move_to(DOWN * 0.6)
         self.play(LaggedStart(*[FadeIn(item, shift=UP * 0.1) for item in items], lag_ratio=0.1), run_time=0.9)
+        self.step()
 
         focus = items[2]
         focus[0].set_fill(AMBER, opacity=0.32).set_stroke(AMBER, width=4)
         ripple = Circle(radius=0.5, color=AMBER, stroke_width=3).move_to(focus)
         self.play(Create(ripple), ripple.animate.scale(1.7).set_opacity(0), run_time=0.55)
+        self.step()
 
         weights = {0: 0.18, 1: 0.36, 3: 0.15, 4: 0.82, 5: 0.91}
         arcs = VGroup()
@@ -205,6 +282,7 @@ class AttentionOps(Scene):
             run_time=1.2,
         )
         self.remove(*dots)
+        self.step()
 
         result = pill("startet  +  Kontext  →  Repräsentation im Satz", MINT, width=7.2)
         result.move_to(DOWN * 2.65)
@@ -212,11 +290,13 @@ class AttentionOps(Scene):
         note = Text("Gewichte sind kontextabhängig und werden in vielen Köpfen parallel berechnet.", font_size=20, color=MUTED)
         note.to_edge(DOWN, buff=0.25)
         self.play(FadeIn(note), run_time=0.45)
-        self.wait(1.2)
+        self.step()
 
 
-class NextToken(Scene):
+class NextToken(SteppedScene):
     """A context update changes the next-token distribution."""
+
+    slug = "next-token"
 
     def construct(self):
         title = heading("Eine Verteilung, dann eine Auswahl", "LLM · Ausgabe")
@@ -243,6 +323,7 @@ class NextToken(Scene):
             percents.append(pct)
         rows.arrange(DOWN, buff=0.3, aligned_edge=LEFT).move_to(DOWN * 0.2)
         self.play(LaggedStart(*[FadeIn(row, shift=RIGHT * 0.25) for row in rows], lag_ratio=0.12), run_time=1.0)
+        self.step()
 
         context = pill("+ Event: Back-off restarting failed container", CYAN, width=8.9)
         context.move_to(DOWN * 2.5)
@@ -257,6 +338,7 @@ class NextToken(Scene):
             bar_anims.append(bar.animate.become(target_bar))
             pct_anims.append(pct.animate.become(target_pct))
         self.play(*bar_anims, *pct_anims, run_time=1.1, rate_func=smooth)
+        self.step()
 
         chosen = Text("gewählt", font_size=18, color=CORAL, weight="BOLD").next_to(rows[0], RIGHT, buff=0.25)
         marker = Arrow(chosen.get_left(), rows[0].get_right(), buff=0.1, color=CORAL, stroke_width=3)
@@ -264,11 +346,13 @@ class NextToken(Scene):
         note = Text("Mehr Kontext verändert die Verteilung — er garantiert keine Wahrheit.", font_size=21, color=MUTED)
         note.to_edge(DOWN, buff=0.2)
         self.play(FadeOut(context), FadeIn(note), run_time=0.5)
-        self.wait(1.2)
+        self.step()
 
 
-class AgentLoop(Scene):
+class AgentLoop(SteppedScene):
     """Goal-directed tool use with explicit policy and approval gates."""
+
+    slug = "agent-loop"
 
     def construct(self):
         title = heading("Vom Modell zum kontrollierten Loop", "Agent · Laufzeit")
@@ -290,6 +374,7 @@ class AgentLoop(Scene):
             arrows.add(flow_arrow(nodes[idx].get_center(), nodes[(idx + 1) % len(nodes)].get_center(), colors[(idx + 1) % len(colors)]))
         self.play(LaggedStart(*[GrowFromCenter(node) for node in nodes], lag_ratio=0.1), run_time=0.9)
         self.play(LaggedStart(*[GrowArrow(arrow) for arrow in arrows], lag_ratio=0.1), run_time=0.9)
+        self.step()
 
         policy = RoundedRectangle(width=3.15, height=1.35, corner_radius=0.18, stroke_color=EDGE, fill_color=PANEL, fill_opacity=0.94)
         policy.move_to(center)
@@ -298,6 +383,7 @@ class AgentLoop(Scene):
             Text("Scope · Budget · Stop", font_size=18, color=INK),
         ).arrange(DOWN, buff=0.13).move_to(policy)
         self.play(FadeIn(policy), FadeIn(policy_text), run_time=0.55)
+        self.step()
 
         pulse = Dot(radius=0.1, color=WHITE).move_to(nodes[0])
         self.add(pulse)
@@ -307,6 +393,7 @@ class AgentLoop(Scene):
                 nodes[(idx + 1) % len(nodes)][0].animate.set_fill(colors[(idx + 1) % len(colors)], opacity=0.35),
                 run_time=0.35,
             )
+        self.step()
 
         gate = pill("WRITE → Freigabe", CORAL, width=3.4).to_edge(RIGHT, buff=0.55).shift(DOWN * 2.65)
         gate_arrow = flow_arrow(nodes[3].get_right(), gate.get_left(), CORAL)
@@ -314,11 +401,13 @@ class AgentLoop(Scene):
         note = Text("Autonomie entsteht im Loop. Sicherheit entsteht an seinen Grenzen.", font_size=21, color=MUTED)
         note.to_edge(DOWN, buff=0.2)
         self.play(FadeIn(note), run_time=0.4)
-        self.wait(1.2)
+        self.step()
 
 
-class TrustBoundary(Scene):
+class TrustBoundary(SteppedScene):
     """A request moves through model and tool paths with separate controls."""
+
+    slug = "trust-boundary"
 
     def construct(self):
         title = heading("Zwei Pfade, mehrere Trust Boundaries", "Agentic Ops · Architektur")
@@ -346,6 +435,7 @@ class TrustBoundary(Scene):
             flow_arrow(nodes[4].get_right(), nodes[5].get_left(), MINT),
         )
         self.play(LaggedStart(*[GrowArrow(arrow) for arrow in connections], lag_ratio=0.12), run_time=1.0)
+        self.step()
 
         model_path = Text("Modellpfad · Routing · Budget", font_size=18, color=AMBER).move_to(UP * 2.25 + RIGHT * 1.5)
         tool_path = Text("Toolpfad · Schema · RBAC", font_size=18, color=CORAL).move_to(DOWN * 2.35 + RIGHT * 1.5)
@@ -358,6 +448,7 @@ class TrustBoundary(Scene):
             run_time=1.35,
         )
         self.remove(*packets)
+        self.step()
 
         boundaries = VGroup()
         for x, label in [(-4.6, "User"), (-1.55, "Gateway"), (1.65, "Backend")]:
@@ -369,4 +460,4 @@ class TrustBoundary(Scene):
         note = Text("MCP transportiert Fähigkeiten. Autorisierung bleibt Aufgabe der Plattform.", font_size=21, color=MUTED)
         note.to_edge(DOWN, buff=0.18)
         self.play(FadeIn(note), run_time=0.45)
-        self.wait(1.2)
+        self.step()

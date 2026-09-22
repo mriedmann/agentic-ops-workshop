@@ -18,10 +18,5 @@ cp "$source_dir/NextToken.mp4" "$target_dir/next-token.mp4"
 cp "$source_dir/AgentLoop.mp4" "$target_dir/agent-loop.mp4"
 cp "$source_dir/TrustBoundary.mp4" "$target_dir/trust-boundary.mp4"
 
-ffmpeg -hide_banner -loglevel error -y -ss 4 -i "$target_dir/token-pipeline.mp4" -frames:v 1 -update 1 "$target_dir/token-pipeline-poster.png"
-ffmpeg -hide_banner -loglevel error -y -ss 4 -i "$target_dir/attention-ops.mp4" -frames:v 1 -update 1 "$target_dir/attention-ops-poster.png"
-ffmpeg -hide_banner -loglevel error -y -ss 4 -i "$target_dir/next-token.mp4" -frames:v 1 -update 1 "$target_dir/next-token-poster.png"
-ffmpeg -hide_banner -loglevel error -y -ss 4 -i "$target_dir/agent-loop.mp4" -frames:v 1 -update 1 "$target_dir/agent-loop-poster.png"
-ffmpeg -hide_banner -loglevel error -y -ss 4 -i "$target_dir/trust-boundary.mp4" -frames:v 1 -update 1 "$target_dir/trust-boundary-poster.png"
-
+# Step timestamps (media/*.steps.json) are written by animations.py itself.
 echo "Rendered videos are available in $target_dir"
