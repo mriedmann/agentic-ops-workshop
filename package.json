@@ -1,0 +1,13 @@
+{
+  "name": "svc-ai-presentation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SVC workshop slides: LLMs and Agentic Operations",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "check": "node scripts/check-slides.mjs"
+  },
+  "dependencies": {
+    "reveal.js": "^5.2.1"
+  }
+}

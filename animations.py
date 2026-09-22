@@ -1,0 +1,372 @@
+"""Short, silent Manim loops used by the RevealJS deck.
+
+Render all scenes with:
+    uv run manim -qm --format=mp4 animations.py
+"""
+
+from __future__ import annotations
+
+import numpy as np
+from manim import (
+    AnimationGroup,
+    Arrow,
+    BLUE,
+    Circle,
+    Create,
+    CubicBezier,
+    Dot,
+    DOWN,
+    FadeIn,
+    FadeOut,
+    GREEN,
+    GrowArrow,
+    GrowFromCenter,
+    LaggedStart,
+    LEFT,
+    Line,
+    MoveAlongPath,
+    ORANGE,
+    PI,
+    PURPLE,
+    RED,
+    RIGHT,
+    RoundedRectangle,
+    Scene,
+    Succession,
+    Text,
+    UP,
+    VGroup,
+    WHITE,
+    Write,
+    YELLOW,
+    config,
+    linear,
+    smooth,
+)
+
+
+config.background_color = "#07111f"
+config.pixel_width = 1280
+config.pixel_height = 720
+config.frame_width = 16
+config.frame_height = 9
+Text.set_default(font="DejaVu Sans")
+
+INK = "#e8f1fa"
+MUTED = "#91a4b7"
+CYAN = "#4de3ff"
+MINT = "#54f5b1"
+AMBER = "#ffca5c"
+CORAL = "#ff6b6b"
+PANEL = "#0d2035"
+EDGE = "#21405d"
+
+
+def heading(text: str, kicker: str) -> VGroup:
+    small = Text(kicker.upper(), font_size=18, color=CYAN, weight="BOLD")
+    title = Text(text, font_size=42, color=INK, weight="BOLD")
+    group = VGroup(small, title).arrange(DOWN, aligned_edge=LEFT, buff=0.12)
+    group.to_edge(UP, buff=0.45).to_edge(LEFT, buff=0.65)
+    return group
+
+
+def pill(text: str, color: str = CYAN, width: float | None = None) -> VGroup:
+    label = Text(text, font_size=23, color=INK)
+    box = RoundedRectangle(
+        width=width or label.width + 0.5,
+        height=0.66,
+        corner_radius=0.16,
+        stroke_color=color,
+        stroke_width=2,
+        fill_color=color,
+        fill_opacity=0.12,
+    )
+    return VGroup(box, label)
+
+
+def flow_arrow(start, end, color=CYAN) -> Arrow:
+    return Arrow(start, end, buff=0.12, color=color, stroke_width=3, max_tip_length_to_length_ratio=0.16)
+
+
+class TokenPipeline(Scene):
+    """Text is split into token IDs and mapped to vectors."""
+
+    def construct(self):
+        title = heading("Text wird zu Zahlen", "LLM · Eingabe")
+        sentence = Text("Der Pod startet nicht.", font_size=42, color=INK)
+        sentence.move_to(UP * 1.75)
+        self.play(FadeIn(title, shift=DOWN * 0.15), Write(sentence), run_time=0.9)
+
+        token_words = ["Der", " Pod", " startet", " nicht", "."]
+        token_ids = ["510", "18422", "7912", "902", "13"]
+        colors = [CYAN, MINT, AMBER, CORAL, PURPLE]
+        tokens = VGroup(*[pill(word, color) for word, color in zip(token_words, colors)])
+        tokens.arrange(RIGHT, buff=0.16).move_to(UP * 0.35)
+        arrow1 = flow_arrow(sentence.get_bottom(), tokens.get_top())
+
+        self.play(GrowArrow(arrow1), run_time=0.35)
+        self.play(LaggedStart(*[GrowFromCenter(token) for token in tokens], lag_ratio=0.12), run_time=1.0)
+
+        ids = VGroup()
+        id_lines = VGroup()
+        for token, token_id, color in zip(tokens, token_ids, colors):
+            ident = Text(token_id, font_size=20, color=color, font="DejaVu Sans Mono")
+            ident.next_to(token, DOWN, buff=0.43)
+            ids.add(ident)
+            id_lines.add(Line(token.get_bottom(), ident.get_top(), color=color, stroke_opacity=0.5))
+        self.play(Create(id_lines), FadeIn(ids, shift=DOWN * 0.1), run_time=0.7)
+
+        vector_box = RoundedRectangle(
+            width=11.7,
+            height=1.3,
+            corner_radius=0.2,
+            stroke_color=EDGE,
+            fill_color=PANEL,
+            fill_opacity=0.9,
+        ).move_to(DOWN * 2.4)
+        vector_label = Text("Embedding-Vektoren", font_size=18, color=MUTED).next_to(vector_box, UP, buff=0.12)
+        vectors = VGroup()
+        for color in colors:
+            bars = VGroup(
+                *[
+                    RoundedRectangle(
+                        width=0.23,
+                        height=0.22 + 0.42 * value,
+                        corner_radius=0.05,
+                        stroke_width=0,
+                        fill_color=color,
+                        fill_opacity=0.4 + 0.5 * value,
+                    )
+                    for value in [0.2, 0.75, 0.45, 0.95, 0.3, 0.62]
+                ]
+            ).arrange(RIGHT, buff=0.07, aligned_edge=DOWN)
+            vectors.add(bars)
+        vectors.arrange(RIGHT, buff=0.5).move_to(vector_box)
+
+        arrow2 = flow_arrow(ids.get_bottom(), vector_box.get_top())
+        self.play(GrowArrow(arrow2), FadeIn(vector_box), FadeIn(vector_label), run_time=0.55)
+        self.play(LaggedStart(*[FadeIn(vector, shift=UP * 0.2) for vector in vectors], lag_ratio=0.12), run_time=0.9)
+
+        note = Text("Tokens sind Textstücke — keine Wörter und keine Bedeutung an sich.", font_size=22, color=MUTED)
+        note.to_edge(DOWN, buff=0.26)
+        self.play(FadeIn(note), run_time=0.45)
+        self.wait(1.2)
+
+
+class AttentionOps(Scene):
+    """Attention is visualized as contextual routing between tokens."""
+
+    def construct(self):
+        title = heading("Kontext wird gewichtet", "Transformer · Self-Attention")
+        subtitle = Text("Welche Tokens helfen, „startet“ einzuordnen?", font_size=23, color=MUTED)
+        subtitle.next_to(title, DOWN, aligned_edge=LEFT, buff=0.2)
+        self.play(FadeIn(title), FadeIn(subtitle), run_time=0.7)
+
+        words = ["Pod", "api-7f9", "startet", "wegen", "ConfigMap", "nicht"]
+        colors = [MUTED, CYAN, AMBER, MUTED, MINT, CORAL]
+        items = VGroup(*[pill(word, color) for word, color in zip(words, colors)])
+        items.arrange(RIGHT, buff=0.25).move_to(DOWN * 0.6)
+        self.play(LaggedStart(*[FadeIn(item, shift=UP * 0.1) for item in items], lag_ratio=0.1), run_time=0.9)
+
+        focus = items[2]
+        focus[0].set_fill(AMBER, opacity=0.32).set_stroke(AMBER, width=4)
+        ripple = Circle(radius=0.5, color=AMBER, stroke_width=3).move_to(focus)
+        self.play(Create(ripple), ripple.animate.scale(1.7).set_opacity(0), run_time=0.55)
+
+        weights = {0: 0.18, 1: 0.36, 3: 0.15, 4: 0.82, 5: 0.91}
+        arcs = VGroup()
+        dots = VGroup()
+        labels = VGroup()
+        for idx, weight in weights.items():
+            start = focus.get_top() + UP * 0.05
+            end = items[idx].get_top() + UP * 0.05
+            height = 0.75 + abs(idx - 2) * 0.2
+            arc = CubicBezier(
+                start,
+                start + UP * height,
+                end + UP * height,
+                end,
+                color=colors[idx],
+                stroke_width=1.5 + 7 * weight,
+                stroke_opacity=0.35 + 0.6 * weight,
+            )
+            arcs.add(arc)
+            dot = Dot(radius=0.055, color=WHITE).move_to(start)
+            dots.add(dot)
+            label = Text(f"{weight:.2f}", font_size=16, color=colors[idx])
+            label.move_to(arc.point_from_proportion(0.5) + UP * 0.18)
+            labels.add(label)
+
+        self.play(LaggedStart(*[Create(arc) for arc in arcs], lag_ratio=0.12), run_time=1.1)
+        self.add(*dots)
+        self.play(
+            *[MoveAlongPath(dot, arc, rate_func=linear) for dot, arc in zip(dots, arcs)],
+            FadeIn(labels),
+            run_time=1.2,
+        )
+        self.remove(*dots)
+
+        result = pill("startet  +  Kontext  →  Repräsentation im Satz", MINT, width=7.2)
+        result.move_to(DOWN * 2.65)
+        self.play(FadeIn(result, shift=UP * 0.25), run_time=0.7)
+        note = Text("Gewichte sind kontextabhängig und werden in vielen Köpfen parallel berechnet.", font_size=20, color=MUTED)
+        note.to_edge(DOWN, buff=0.25)
+        self.play(FadeIn(note), run_time=0.45)
+        self.wait(1.2)
+
+
+class NextToken(Scene):
+    """A context update changes the next-token distribution."""
+
+    def construct(self):
+        title = heading("Eine Verteilung, dann eine Auswahl", "LLM · Ausgabe")
+        prompt = Text("Der Pod ist im Status …", font_size=36, color=INK)
+        prompt.move_to(UP * 2.0 + LEFT * 2.2)
+        self.play(FadeIn(title), Write(prompt), run_time=0.85)
+
+        names = ["CrashLoopBackOff", "Pending", "Running", "Unknown"]
+        values = [0.43, 0.27, 0.21, 0.09]
+        colors = [CORAL, AMBER, MINT, MUTED]
+        rows = VGroup()
+        bars = []
+        percents = []
+        for name, value, color in zip(names, values, colors):
+            label = Text(name, font_size=22, color=INK, font="DejaVu Sans Mono")
+            label.stretch_to_fit_width(2.7)
+            track = RoundedRectangle(width=5.8, height=0.38, corner_radius=0.12, stroke_color=EDGE, fill_color=EDGE, fill_opacity=0.25)
+            bar = RoundedRectangle(width=5.8 * value, height=0.38, corner_radius=0.12, stroke_width=0, fill_color=color, fill_opacity=0.9)
+            bar.align_to(track, LEFT)
+            pct = Text(f"{value:.0%}", font_size=19, color=color, font="DejaVu Sans Mono")
+            row = VGroup(label, track, bar, pct).arrange(RIGHT, buff=0.2)
+            rows.add(row)
+            bars.append(bar)
+            percents.append(pct)
+        rows.arrange(DOWN, buff=0.3, aligned_edge=LEFT).move_to(DOWN * 0.2)
+        self.play(LaggedStart(*[FadeIn(row, shift=RIGHT * 0.25) for row in rows], lag_ratio=0.12), run_time=1.0)
+
+        context = pill("+ Event: Back-off restarting failed container", CYAN, width=8.9)
+        context.move_to(DOWN * 2.5)
+        self.play(FadeIn(context, shift=UP * 0.2), run_time=0.55)
+
+        new_values = [0.84, 0.08, 0.05, 0.03]
+        bar_anims = []
+        pct_anims = []
+        for row, bar, pct, value, color in zip(rows, bars, percents, new_values, colors):
+            target_bar = bar.copy().stretch_to_fit_width(5.8 * value).align_to(row[1], LEFT)
+            target_pct = Text(f"{value:.0%}", font_size=19, color=color, font="DejaVu Sans Mono").move_to(pct)
+            bar_anims.append(bar.animate.become(target_bar))
+            pct_anims.append(pct.animate.become(target_pct))
+        self.play(*bar_anims, *pct_anims, run_time=1.1, rate_func=smooth)
+
+        chosen = Text("gewählt", font_size=18, color=CORAL, weight="BOLD").next_to(rows[0], RIGHT, buff=0.25)
+        marker = Arrow(chosen.get_left(), rows[0].get_right(), buff=0.1, color=CORAL, stroke_width=3)
+        self.play(FadeIn(chosen), GrowArrow(marker), rows[0].animate.scale(1.035), run_time=0.55)
+        note = Text("Mehr Kontext verändert die Verteilung — er garantiert keine Wahrheit.", font_size=21, color=MUTED)
+        note.to_edge(DOWN, buff=0.2)
+        self.play(FadeOut(context), FadeIn(note), run_time=0.5)
+        self.wait(1.2)
+
+
+class AgentLoop(Scene):
+    """Goal-directed tool use with explicit policy and approval gates."""
+
+    def construct(self):
+        title = heading("Vom Modell zum kontrollierten Loop", "Agent · Laufzeit")
+        self.play(FadeIn(title), run_time=0.55)
+
+        center = np.array([0.0, -0.3, 0.0])
+        radius = 2.5
+        labels = ["Ziel", "Beobachten", "Entscheiden", "Tool ausführen", "Ergebnis prüfen"]
+        colors = [CYAN, MINT, AMBER, CORAL, PURPLE]
+        angles = [PI / 2, PI / 2 + 2 * PI / 5, PI / 2 + 4 * PI / 5, PI / 2 + 6 * PI / 5, PI / 2 + 8 * PI / 5]
+        nodes = VGroup()
+        for text, color, angle in zip(labels, colors, angles):
+            node = pill(text, color, width=2.35 if text != "Tool ausführen" else 2.75)
+            node.move_to(center + radius * np.array([np.cos(angle), np.sin(angle), 0]))
+            nodes.add(node)
+
+        arrows = VGroup()
+        for idx in range(len(nodes)):
+            arrows.add(flow_arrow(nodes[idx].get_center(), nodes[(idx + 1) % len(nodes)].get_center(), colors[(idx + 1) % len(colors)]))
+        self.play(LaggedStart(*[GrowFromCenter(node) for node in nodes], lag_ratio=0.1), run_time=0.9)
+        self.play(LaggedStart(*[GrowArrow(arrow) for arrow in arrows], lag_ratio=0.1), run_time=0.9)
+
+        policy = RoundedRectangle(width=3.15, height=1.35, corner_radius=0.18, stroke_color=EDGE, fill_color=PANEL, fill_opacity=0.94)
+        policy.move_to(center)
+        policy_text = VGroup(
+            Text("POLICY", font_size=17, color=CYAN, weight="BOLD"),
+            Text("Scope · Budget · Stop", font_size=18, color=INK),
+        ).arrange(DOWN, buff=0.13).move_to(policy)
+        self.play(FadeIn(policy), FadeIn(policy_text), run_time=0.55)
+
+        pulse = Dot(radius=0.1, color=WHITE).move_to(nodes[0])
+        self.add(pulse)
+        for idx, arrow in enumerate(arrows):
+            self.play(
+                MoveAlongPath(pulse, arrow, rate_func=linear),
+                nodes[(idx + 1) % len(nodes)][0].animate.set_fill(colors[(idx + 1) % len(colors)], opacity=0.35),
+                run_time=0.35,
+            )
+
+        gate = pill("WRITE → Freigabe", CORAL, width=3.4).to_edge(RIGHT, buff=0.55).shift(DOWN * 2.65)
+        gate_arrow = flow_arrow(nodes[3].get_right(), gate.get_left(), CORAL)
+        self.play(GrowArrow(gate_arrow), FadeIn(gate), run_time=0.55)
+        note = Text("Autonomie entsteht im Loop. Sicherheit entsteht an seinen Grenzen.", font_size=21, color=MUTED)
+        note.to_edge(DOWN, buff=0.2)
+        self.play(FadeIn(note), run_time=0.4)
+        self.wait(1.2)
+
+
+class TrustBoundary(Scene):
+    """A request moves through model and tool paths with separate controls."""
+
+    def construct(self):
+        title = heading("Zwei Pfade, mehrere Trust Boundaries", "Agentic Ops · Architektur")
+        self.play(FadeIn(title), run_time=0.55)
+
+        specs = [
+            ("Operator", CYAN, LEFT * 6),
+            ("OpenCode", MINT, LEFT * 3.1),
+            ("LiteLLM", AMBER, LEFT * 0.1 + UP * 1.35),
+            ("Modell", PURPLE, RIGHT * 3.2 + UP * 1.35),
+            ("MCP Gateway", CORAL, LEFT * 0.1 + DOWN * 1.45),
+            ("OpenShift API", MINT, RIGHT * 3.2 + DOWN * 1.45),
+        ]
+        nodes = VGroup()
+        for text, color, pos in specs:
+            node = pill(text, color, width=2.35 if text != "OpenShift API" else 2.7).move_to(pos)
+            nodes.add(node)
+        self.play(LaggedStart(*[FadeIn(node, shift=RIGHT * 0.15) for node in nodes], lag_ratio=0.1), run_time=0.9)
+
+        connections = VGroup(
+            flow_arrow(nodes[0].get_right(), nodes[1].get_left(), CYAN),
+            flow_arrow(nodes[1].get_right(), nodes[2].get_left(), AMBER),
+            flow_arrow(nodes[2].get_right(), nodes[3].get_left(), PURPLE),
+            flow_arrow(nodes[1].get_right(), nodes[4].get_left(), CORAL),
+            flow_arrow(nodes[4].get_right(), nodes[5].get_left(), MINT),
+        )
+        self.play(LaggedStart(*[GrowArrow(arrow) for arrow in connections], lag_ratio=0.12), run_time=1.0)
+
+        model_path = Text("Modellpfad · Routing · Budget", font_size=18, color=AMBER).move_to(UP * 2.25 + RIGHT * 1.5)
+        tool_path = Text("Toolpfad · Schema · RBAC", font_size=18, color=CORAL).move_to(DOWN * 2.35 + RIGHT * 1.5)
+        self.play(FadeIn(model_path), FadeIn(tool_path), run_time=0.45)
+
+        packets = VGroup(*[Dot(radius=0.08, color=color) for color in [CYAN, AMBER, PURPLE, CORAL, MINT]])
+        self.add(*packets)
+        self.play(
+            *[MoveAlongPath(packet, path, rate_func=linear) for packet, path in zip(packets, connections)],
+            run_time=1.35,
+        )
+        self.remove(*packets)
+
+        boundaries = VGroup()
+        for x, label in [(-4.6, "User"), (-1.55, "Gateway"), (1.65, "Backend")]:
+            line = Line(UP * 2.55, DOWN * 2.75, color=EDGE, stroke_width=2, stroke_opacity=0.8).move_to(RIGHT * x)
+            caption = Text(label, font_size=15, color=MUTED).next_to(line, DOWN, buff=0.08)
+            boundaries.add(VGroup(line, caption))
+        self.play(LaggedStart(*[Create(boundary) for boundary in boundaries], lag_ratio=0.12), run_time=0.8)
+
+        note = Text("MCP transportiert Fähigkeiten. Autorisierung bleibt Aufgabe der Plattform.", font_size=21, color=MUTED)
+        note.to_edge(DOWN, buff=0.18)
+        self.play(FadeIn(note), run_time=0.45)
+        self.wait(1.2)

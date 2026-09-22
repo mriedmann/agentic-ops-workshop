@@ -1,0 +1,9 @@
+[project]
+name = "svc-ai-presentation"
+version = "0.1.0"
+description = "RevealJS and Manim workshop material for LLMs and Agentic Operations"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "manim>=0.19,<0.20",
+]

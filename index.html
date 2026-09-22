@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="SVC Workshop zu Large Language Models und Agentic Operations" />
+    <title>LLMs &amp; Agentic Operations · SVC Workshop</title>
+    <link rel="stylesheet" href="node_modules/reveal.js/dist/reset.css" />
+    <link rel="stylesheet" href="node_modules/reveal.js/dist/reveal.css" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="deck-chrome" aria-hidden="true">
+        <span class="deck-brand">SVC · AI WORKSHOP</span>
+        <span class="deck-section" id="deck-section">START</span>
+      </div>
+
+      <div class="slides">
+        <section class="hero" data-section="Start" data-background-color="#07111f">
+          <div class="eyebrow">SVC WORKSHOP · 2026</div>
+          <h1>LLMs <span class="accent">&amp;</span><br />Agentic Operations</h1>
+          <p class="lede">Vom nächsten Token zum kontrollierten Tool-Loop</p>
+          <div class="hero-terminal" aria-label="Terminal-Ausgabe">
+            <span class="prompt">$</span> diagnose pod/api-7f9
+            <span class="cursor"></span>
+          </div>
+          <aside class="notes">
+            Einstieg: Heute demystifizieren wir Sprachmodelle und bauen danach den Agentenbegriff sauber darauf auf.
+            Nicht Ziel: ML-Forschung oder ein Produkt-Pitch. Ziel: ein belastbares Betriebsmodell.
+          </aside>
+        </section>
+
+        <section data-section="Start">
+          <div class="eyebrow">CHECK-IN · 10 MIN</div>
+          <h2>Welche Störung würdest du<br /><span class="accent">gern schneller verstehen?</span></h2>
+          <div class="question-grid">
+            <div class="question-card fragment">
+              <span class="question-number">01</span>
+              <p>Name &amp; Verantwortungsbereich</p>
+            </div>
+            <div class="question-card fragment">
+              <span class="question-number">02</span>
+              <p>Ein Debugging-Fall, der Zeit frisst</p>
+            </div>
+            <div class="question-card fragment">
+              <span class="question-number">03</span>
+              <p>Chat oder Agent schon im Einsatz?</p>
+            </div>
+          </div>
+          <aside class="notes">Je Person maximal 30 Sekunden. Beispiele auf Karten sammeln; später im Use-Case-Lab wieder aufnehmen.</aside>
+        </section>
+
+        <section data-section="Start">
+          <div class="eyebrow">ROUTE · 4:30 H</div>
+          <h2>Unser Weg durch den Stack</h2>
+          <div class="timeline">
+            <div class="timeline-item fragment"><b>01</b><span>Text → Token</span><small>55 min</small></div>
+            <div class="timeline-item fragment"><b>02</b><span>Betrieb &amp; Grenzen</span><small>20 min</small></div>
+            <div class="timeline-item fragment"><b>03</b><span>LLM → Agent</span><small>45 min</small></div>
+            <div class="timeline-item fragment"><b>04</b><span>Agentic Ops</span><small>25 min</small></div>
+            <div class="timeline-item fragment"><b>05</b><span>Showcase &amp; Lab</span><small>70 min</small></div>
+          </div>
+          <p class="bottom-line fragment">Leitfrage: Wo endet Sprachgenerierung — und wo beginnt verantwortbare Automation?</p>
+        </section>
+
+        <section class="chapter" data-section="LLM" data-background-color="#0a1828">
+          <span class="chapter-number">01</span>
+          <div>
+            <div class="eyebrow">GRUNDLAGEN</div>
+            <h2>Vom Text zum<br /><span class="accent">nächsten Token</span></h2>
+          </div>
+        </section>
+
+        <section data-section="LLM">
+          <div class="eyebrow">BEGRIFFE · 8 MIN</div>
+          <h2>Nicht alles ist „AI“</h2>
+          <div class="nested-map" aria-label="Einordnung von AI-Begriffen">
+            <div class="ring ai"><span>Artificial Intelligence</span>
+              <div class="ring ml"><span>Machine Learning</span>
+                <div class="ring dl"><span>Deep Learning</span>
+                  <div class="ring llm"><span>LLM</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="product-card fragment">
+              <small>PRODUKT</small>
+              <strong>Chat-Assistent</strong>
+              <span>Modell + Prompt + UI + Tools + Policies</span>
+            </div>
+          </div>
+          <p class="callout fragment">Ein LLM ist ein Modell. Ein Chatbot ist ein System um dieses Modell.</p>
+        </section>
+
+        <section data-section="LLM" data-auto-animate>
+          <div class="eyebrow">MENTALES MODELL</div>
+          <h2>Die eine Aussage,<br />die alles zusammenhält</h2>
+          <div class="big-statement">
+            <span>Ein LLM berechnet</span>
+            <strong>P(<span class="accent">nächstes Token</span> | bisheriger Kontext)</strong>
+          </div>
+          <p class="fragment warning-line">Nicht: „Was ist wahr?“ · Nicht: „Was will der Mensch wirklich?“</p>
+          <aside class="notes">Die Formel verbal lesen. Das senkrechte Zeichen bedeutet: unter der Bedingung des bisherigen Kontextes.</aside>
+        </section>
+
+        <section data-section="LLM" class="video-slide">
+          <div class="video-copy">
+            <div class="eyebrow">SCHRITT 1 · TOKEN</div>
+            <h2>Text wird<br /><span class="accent">adressierbar</span></h2>
+            <ul class="clean-list">
+              <li class="fragment">Textstücke, nicht zwingend Wörter</li>
+              <li class="fragment">Jedes Token erhält eine ID</li>
+              <li class="fragment">IDs werden zu Vektoren</li>
+            </ul>
+          </div>
+          <div class="media-frame">
+            <video data-autoplay loop muted playsinline poster="media/token-pipeline-poster.png">
+              <source src="media/token-pipeline.mp4" type="video/mp4" />
+            </video>
+            <div class="media-fallback">Animation nach <code>./scripts/render-animations.sh</code></div>
+          </div>
+          <aside class="notes">Wichtig korrigieren: Tokenisierung ist kein Stemming. IDs tragen selbst keine semantische Bedeutung.</aside>
+        </section>
+
+        <section data-section="LLM">
+          <div class="eyebrow">SCHRITT 2 · EMBEDDINGS</div>
+          <h2>Bedeutung als <span class="accent">Geometrie</span></h2>
+          <div class="split">
+            <div class="vector-space">
+              <span class="axis axis-x">Dimension 1 →</span>
+              <span class="axis axis-y">Dimension 2 →</span>
+              <span class="point p1">pod</span><span class="point p2">container</span>
+              <span class="point p3">node</span><span class="point p4">apfel</span>
+              <span class="cluster"></span>
+            </div>
+            <div class="explain-stack">
+              <div class="concept fragment"><b>Vektor</b><span>eine lange Liste gelernter Zahlen</span></div>
+              <div class="concept fragment"><b>Ähnlichkeit</b><span>oft als Nähe oder Winkel messbar</span></div>
+              <div class="concept fragment"><b>Kontext</b><span>verschiebt die Repräsentation im Satz</span></div>
+            </div>
+          </div>
+          <p class="fineprint">Die 2-D-Grafik ist eine Projektion. Reale Repräsentationen haben viele Dimensionen.</p>
+        </section>
+
+        <section data-section="LLM" class="video-slide reverse">
+          <div class="video-copy">
+            <div class="eyebrow">SCHRITT 3 · ATTENTION</div>
+            <h2>Dynamisches<br /><span class="accent">Kontext-Routing</span></h2>
+            <p>Jedes Token gewichtet, welche anderen Tokens für seine aktuelle Repräsentation relevant sind.</p>
+            <div class="mini-callout fragment">Viele Attention-Heads lernen unterschiedliche Beziehungen parallel.</div>
+          </div>
+          <div class="media-frame">
+            <video data-autoplay loop muted playsinline poster="media/attention-ops-poster.png">
+              <source src="media/attention-ops.mp4" type="video/mp4" />
+            </video>
+            <div class="media-fallback">Manim · Self-Attention</div>
+          </div>
+        </section>
+
+        <section data-section="LLM" data-auto-animate>
+          <div class="eyebrow">TRANSFORMER · VEREINFACHT</div>
+          <h2>Dieselbe Form — viele Male</h2>
+          <div class="pipeline">
+            <div class="pipe-node">Tokens<small>+ Position</small></div>
+            <span class="pipe-arrow">→</span>
+            <div class="transformer-stack">
+              <div>Self-Attention</div>
+              <div>Feed Forward</div>
+              <div>Residual + Norm</div>
+            </div>
+            <span class="pipe-repeat">× N</span>
+            <span class="pipe-arrow">→</span>
+            <div class="pipe-node hot">Logits<small>Scores je Token</small></div>
+          </div>
+          <div class="ops-analogy fragment">
+            <span>Attention</span><b>Welche Signale sind relevant?</b>
+            <span>Feed Forward</span><b>Wie transformiere ich sie?</b>
+            <span>Residual</span><b>Was soll erhalten bleiben?</b>
+          </div>
+        </section>
+
+        <section data-section="LLM" class="video-slide">
+          <div class="video-copy">
+            <div class="eyebrow">SCHRITT 4 · DECODE</div>
+            <h2>Wahrscheinlich,<br />nicht <span class="accent">gewiss</span></h2>
+            <p>Aus Scores wird eine Verteilung. Ein Auswahlverfahren bestimmt das nächste Token.</p>
+            <div class="temperature fragment"><span>deterministischer</span><i></i><span>variabler</span></div>
+          </div>
+          <div class="media-frame">
+            <video data-autoplay loop muted playsinline poster="media/next-token-poster.png">
+              <source src="media/next-token.mp4" type="video/mp4" />
+            </video>
+            <div class="media-fallback">Manim · Next-Token-Verteilung</div>
+          </div>
+        </section>
+
+        <section data-section="LLM">
+          <div class="eyebrow">ZWEI PHASEN</div>
+          <h2>Training ≠ Inferenz</h2>
+          <div class="compare">
+            <article class="compare-card">
+              <span class="tag">TRAINING</span>
+              <h3>Gewichte lernen</h3>
+              <ul><li>sehr viele Beispiele</li><li>Vorhersagefehler reduzieren</li><li>teuer, batch-orientiert, selten</li></ul>
+              <div class="card-footer">Daten → Optimierung → Modell</div>
+            </article>
+            <article class="compare-card accent-card fragment">
+              <span class="tag">INFERENZ</span>
+              <h3>Gewichte anwenden</h3>
+              <ul><li>Prompt + aktueller Kontext</li><li>Token für Token decodieren</li><li>latenzkritisch, ständig</li></ul>
+              <div class="card-footer">Kontext → Modell → Ausgabe</div>
+            </article>
+          </div>
+          <p class="callout fragment">Ein Prompt aktualisiert normalerweise keine Modellgewichte.</p>
+        </section>
+
+        <section class="chapter" data-section="Betrieb" data-background-color="#101827">
+          <span class="chapter-number">02</span>
+          <div><div class="eyebrow">SYSTEMS VIEW</div><h2>Betrieb,<br /><span class="accent">Skalierung &amp; Grenzen</span></h2></div>
+        </section>
+
+        <section data-section="Betrieb">
+          <div class="eyebrow">WARUM GPU?</div>
+          <h2>Parallelität trifft <span class="accent">Matrixoperationen</span></h2>
+          <div class="gpu-layout">
+            <div class="matrix-grid" aria-label="Matrixmultiplikation">
+              <div class="matrix a">A</div><span>×</span><div class="matrix b">W</div><span>=</span><div class="matrix c">H</div>
+            </div>
+            <div class="metric-stack">
+              <div class="metric fragment"><b>Gewichte</b><span>Parameter × Bytes</span></div>
+              <div class="metric fragment"><b>KV-Cache</b><span>pro Request &amp; Kontext</span></div>
+              <div class="metric fragment"><b>Aktivierungen</b><span>Runtime-Overhead</span></div>
+            </div>
+          </div>
+          <p class="bottom-line fragment">Quantisierung spart Speicher. MoE aktiviert pro Token nur einen Teil der Experten.</p>
+        </section>
+
+        <section data-section="Betrieb">
+          <div class="eyebrow">INFERENZ-PFAD</div>
+          <h2>Latenz hat zwei Gesichter</h2>
+          <div class="latency-flow">
+            <div class="latency-block prefill"><small>01</small><b>Prefill</b><span>Prompt parallel verarbeiten</span></div>
+            <div class="latency-arrow">→</div>
+            <div class="latency-block decode"><small>02</small><b>Decode</b><span>Token seriell erzeugen</span></div>
+          </div>
+          <div class="observability fragment">
+            <span>TTFT</span><span>Tokens/s</span><span>Queue Time</span><span>Kontext</span><span>Kosten</span><span>Fehler</span>
+          </div>
+          <p class="fineprint">KV-Caching beschleunigt Decode, verbraucht aber GPU-Speicher mit wachsendem Kontext und Parallelismus.</p>
+        </section>
+
+        <section data-section="Betrieb">
+          <div class="eyebrow">REALITY CHECK</div>
+          <h2>Vier häufige Fehlerbilder</h2>
+          <div class="failure-grid">
+            <article class="failure fragment"><b>01</b><h3>Plausibel falsch</h3><p>Wahrscheinliche Fortsetzung ist keine verifizierte Aussage.</p><span>Evidenz + Quellen</span></article>
+            <article class="failure fragment"><b>02</b><h3>Veraltet</h3><p>Gewichte kennen den aktuellen Clusterzustand nicht.</p><span>RAG + Live-Tools</span></article>
+            <article class="failure fragment"><b>03</b><h3>Injiziert</h3><p>Untrusted Content kann wie eine Instruktion aussehen.</p><span>Daten ≠ Befehle</span></article>
+            <article class="failure fragment"><b>04</b><h3>Nicht reproduzierbar</h3><p>Sampling und Änderungen im Backend erzeugen Varianz.</p><span>Evals + Struktur</span></article>
+          </div>
+        </section>
+
+        <section data-section="Betrieb" class="quiz-slide">
+          <div class="eyebrow">VERSTÄNDNISCHECK · 5 MIN</div>
+          <h2>Was verändert zusätzlicher Kontext?</h2>
+          <div class="quiz-options">
+            <div class="quiz-option fragment">A <span>die Modellgewichte</span></div>
+            <div class="quiz-option fragment">B <span>die nächste Token-Verteilung</span></div>
+            <div class="quiz-option fragment">C <span>die Wahrheit der Antwort</span></div>
+          </div>
+          <div class="answer fragment">B <span>— mehr Evidenz kann helfen, garantiert aber nichts.</span></div>
+        </section>
+
+        <section class="break-slide" data-section="Pause" data-background-color="#091a2d">
+          <div class="eyebrow">15 MINUTEN</div>
+          <h2>Pause<span class="accent">.</span></h2>
+          <div class="break-prompt">Danach: Wie bekommt ein Sprachmodell Hände?</div>
+        </section>
+
+        <section class="chapter" data-section="Agents" data-background-color="#0a1828">
+          <span class="chapter-number">03</span>
+          <div><div class="eyebrow">AGENTIC SYSTEMS</div><h2>Vom LLM<br /><span class="accent">zum Agenten</span></h2></div>
+        </section>
+
+        <section data-section="Agents">
+          <div class="eyebrow">AUTONOMIE</div>
+          <h2>So deterministisch wie möglich.<br /><span class="accent">So agentisch wie nötig.</span></h2>
+          <div class="autonomy-scale">
+            <article class="fragment"><span>CHAT</span><b>Mensch wählt jeden Schritt</b><small>geringer Blast Radius</small></article>
+            <i></i>
+            <article class="fragment"><span>WORKFLOW</span><b>Code wählt den Pfad</b><small>messbar &amp; reproduzierbar</small></article>
+            <i></i>
+            <article class="fragment"><span>AGENT</span><b>Modell wählt nächste Aktion</b><small>flexibel, mehr Kontrolle nötig</small></article>
+          </div>
+        </section>
+
+        <section data-section="Agents" class="video-slide reverse">
+          <div class="video-copy">
+            <div class="eyebrow">AGENT-LOOP</div>
+            <h2>Entscheiden.<br />Handeln. <span class="accent">Prüfen.</span></h2>
+            <ul class="clean-list">
+              <li class="fragment">Ziel + Zustand</li>
+              <li class="fragment">Tools + Policies</li>
+              <li class="fragment">Budget + Stop-Bedingung</li>
+            </ul>
+          </div>
+          <div class="media-frame">
+            <video data-autoplay loop muted playsinline poster="media/agent-loop-poster.png">
+              <source src="media/agent-loop.mp4" type="video/mp4" />
+            </video>
+            <div class="media-fallback">Manim · Agent-Loop</div>
+          </div>
+        </section>
+
+        <section data-section="Agents">
+          <div class="eyebrow">BAUSTEINE</div>
+          <h2>Fünf Begriffe, fünf Rollen</h2>
+          <div class="definition-list">
+            <div class="fragment"><b>Tool</b><span>ausführbare Fähigkeit mit strukturiertem Vertrag</span><code>get_pod_logs(ns, pod)</code></div>
+            <div class="fragment"><b>Skill</b><span>wiederverwendbare Prozedur aus Anleitung + Tools</span><code>debug-crashloop</code></div>
+            <div class="fragment"><b>MCP</b><span>Protokoll für Discovery und Aufruf von Fähigkeiten</span><code>tools/list → tools/call</code></div>
+            <div class="fragment"><b>RAG</b><span>relevante externe Inhalte in den Kontext holen</span><code>search → retrieve → prompt</code></div>
+            <div class="fragment"><b>Memory</b><span>explizit gespeicherter Zustand über Schritte oder Sessions</span><code>state + lifecycle</code></div>
+          </div>
+        </section>
+
+        <section data-section="Agents">
+          <div class="eyebrow">RAG</div>
+          <h2>Wissen holen, <span class="accent">nicht neu trainieren</span></h2>
+          <div class="rag-flow">
+            <div class="rag-node">Frage</div><span>→</span>
+            <div class="rag-node">Suche<small>Runbooks · Tickets · Docs</small></div><span>→</span>
+            <div class="rag-node">Kontext<small>relevante Passagen</small></div><span>→</span>
+            <div class="rag-node hot">LLM<small>Antwort + Belege</small></div>
+          </div>
+          <div class="two-truths">
+            <p class="fragment"><b>RAG kann</b> Aktualität und Nachvollziehbarkeit verbessern.</p>
+            <p class="fragment"><b>RAG kann nicht</b> jede falsche Schlussfolgerung verhindern.</p>
+          </div>
+        </section>
+
+        <section data-section="Agents">
+          <div class="eyebrow">MCP</div>
+          <h2>Ein Protokoll — <span class="accent">kein Sicherheitsmodell</span></h2>
+          <div class="mcp-layout">
+            <div class="mcp-client"><small>HOST</small><b>OpenCode</b><span>MCP Client</span></div>
+            <div class="mcp-wire"><span>JSON-RPC</span><i></i><code>tools/list</code><code>tools/call</code></div>
+            <div class="mcp-server"><small>SERVER</small><b>OpenShift MCP</b><span>Tools · Resources</span></div>
+          </div>
+          <p class="callout fragment">MCP standardisiert den Anschluss. RBAC autorisiert die tatsächliche Cluster-Aktion.</p>
+        </section>
+
+        <section class="chapter" data-section="Agentic Ops" data-background-color="#101827">
+          <span class="chapter-number">04</span>
+          <div><div class="eyebrow">PLATTFORM</div><h2>Agentic<br /><span class="accent">Operations</span></h2></div>
+        </section>
+
+        <section data-section="Agentic Ops" class="video-slide architecture-video">
+          <div class="video-copy">
+            <div class="eyebrow">SHOWCASE-ARCHITEKTUR</div>
+            <h2>Zwei Pfade.<br />Mehrere <span class="accent">Grenzen.</span></h2>
+            <p>Modellzugriff und Toolzugriff brauchen jeweils eigene Identität, Policy und Telemetrie.</p>
+          </div>
+          <div class="media-frame">
+            <video data-autoplay loop muted playsinline poster="media/trust-boundary-poster.png">
+              <source src="media/trust-boundary.mp4" type="video/mp4" />
+            </video>
+            <div class="media-fallback">Manim · Trust Boundaries</div>
+          </div>
+        </section>
+
+        <section data-section="Agentic Ops">
+          <div class="eyebrow">DEFENCE IN DEPTH</div>
+          <h2>Der Blast Radius ist <span class="accent">konfigurierbar</span></h2>
+          <div class="control-layers">
+            <div class="control fragment"><span>01</span><b>Identity</b><small>User, Agent, ServiceAccount</small></div>
+            <div class="control fragment"><span>02</span><b>Scope</b><small>Namespace, Resource, Verb</small></div>
+            <div class="control fragment"><span>03</span><b>Contract</b><small>Tool-Schema, Validation, Limits</small></div>
+            <div class="control fragment"><span>04</span><b>Approval</b><small>Read auto, Write gated</small></div>
+            <div class="control fragment"><span>05</span><b>Evidence</b><small>Calls, Outputs, Diff, Audit</small></div>
+          </div>
+          <p class="bottom-line fragment">Read-only ist ein guter Startpunkt — aber auch Lesen kann Secrets oder personenbezogene Daten offenlegen.</p>
+        </section>
+
+        <section data-section="Agentic Ops">
+          <div class="eyebrow">OBSERVABILITY</div>
+          <h2>Was müssen wir sehen?</h2>
+          <div class="trace">
+            <div><small>INPUT</small><b>Prompt + Policy-Version</b></div><span>→</span>
+            <div><small>MODEL</small><b>Modell + Tokens + Latenz</b></div><span>→</span>
+            <div><small>TOOL</small><b>Name + Argumente + Resultat</b></div><span>→</span>
+            <div><small>OUTCOME</small><b>Freigabe + Änderung + Erfolg</b></div>
+          </div>
+          <div class="observability fragment"><span>Trace-ID</span><span>Redaction</span><span>Budget</span><span>Eval</span><span>Audit</span></div>
+        </section>
+
+        <section class="chapter" data-section="Showcase" data-background-color="#0a1828">
+          <span class="chapter-number">05</span>
+          <div><div class="eyebrow">LIVE</div><h2>OpenShift<br /><span class="accent">Debugging Showcase</span></h2></div>
+        </section>
+
+        <section data-section="Showcase">
+          <div class="eyebrow">INCIDENT</div>
+          <h2>Pod <code>api-7f9</code> startet nicht</h2>
+          <div class="incident-ticket">
+            <div class="ticket-head"><span>INC-2048</span><span class="severity">SEV-3</span></div>
+            <div class="ticket-grid">
+              <div><small>SYMPTOM</small><b>CrashLoopBackOff</b></div>
+              <div><small>SCOPE</small><b>Namespace <code>svc-lab</code></b></div>
+              <div><small>ERFOLG</small><b>Ursache mit Evidenz</b></div>
+              <div><small>GRENZE</small><b>Keine Änderung ohne Freigabe</b></div>
+            </div>
+          </div>
+          <p class="prompt-to-room fragment">Welche drei Beobachtungen würdet ihr zuerst holen?</p>
+          <aside class="notes">Antworten sammeln, bevor OpenCode gestartet wird. Dann vergleichen, ob der Agent ähnlich priorisiert.</aside>
+        </section>
+
+        <section data-section="Showcase">
+          <div class="eyebrow">DEMO-FLOW · 35 MIN</div>
+          <h2>Nicht Magie zeigen.<br /><span class="accent">Entscheidungen sichtbar machen.</span></h2>
+          <ol class="demo-steps">
+            <li class="fragment"><b>01</b><span>Prompt, Policies und Tools offenlegen</span></li>
+            <li class="fragment"><b>02</b><span>Toolwahl und strukturierte Argumente beobachten</span></li>
+            <li class="fragment"><b>03</b><span>Diagnose gegen Tool-Evidenz prüfen</span></li>
+            <li class="fragment"><b>04</b><span>Änderung nur als Diff oder Command vorschlagen</span></li>
+            <li class="fragment"><b>05</b><span>Mit manuellem Debugging-Pfad vergleichen</span></li>
+          </ol>
+        </section>
+
+        <section data-section="Showcase">
+          <div class="eyebrow">DEBRIEF</div>
+          <h2>Vier Fragen an das System</h2>
+          <div class="question-grid two-by-two">
+            <div class="question-card fragment"><span class="question-number">01</span><p>Was war Modellleistung?</p></div>
+            <div class="question-card fragment"><span class="question-number">02</span><p>Was war Plattformleistung?</p></div>
+            <div class="question-card fragment"><span class="question-number">03</span><p>Wo konnte Injection wirken?</p></div>
+            <div class="question-card fragment"><span class="question-number">04</span><p>Wo muss ein Mensch stoppen?</p></div>
+          </div>
+        </section>
+
+        <section class="chapter" data-section="Lab" data-background-color="#101827">
+          <span class="chapter-number">06</span>
+          <div><div class="eyebrow">TRANSFER</div><h2>Use-Case<br /><span class="accent">Lab</span></h2></div>
+        </section>
+
+        <section data-section="Lab">
+          <div class="eyebrow">IDEATION · 8 MIN</div>
+          <h2>Ein Satz. Ein Ergebnis.</h2>
+          <div class="sentence-template">
+            <span>Wenn</span><b>[Signal / Ereignis]</b><span>soll der Agent</span><b>[Ergebnis]</b><span>liefern, indem er</span><b>[Daten / Tools]</b><span>nutzt.</span>
+          </div>
+          <p class="bottom-line">Eine Karte pro Idee. Noch nicht diskutieren — erst Vielfalt erzeugen.</p>
+        </section>
+
+        <section data-section="Lab">
+          <div class="eyebrow">PRIORISIERUNG · 12 MIN</div>
+          <h2>Nutzen gegen Risiko</h2>
+          <div class="matrix-chart">
+            <span class="y-label">NUTZEN ↑</span><span class="x-label">RISIKO →</span>
+            <div class="quadrant q1"><b>PILOTIEREN</b><span>hoch · niedrig</span></div>
+            <div class="quadrant q2"><b>ABSICHERN</b><span>hoch · hoch</span></div>
+            <div class="quadrant q3"><b>PARKEN</b><span>niedrig · niedrig</span></div>
+            <div class="quadrant q4"><b>VERMEIDEN</b><span>niedrig · hoch</span></div>
+          </div>
+          <div class="chips fragment"><span>read-only?</span><span>reversibel?</span><span>Evidenz?</span><span>messbar?</span></div>
+        </section>
+
+        <section data-section="Lab">
+          <div class="eyebrow">PILOT CANVAS · 5 MIN</div>
+          <h2>Der kleinste sichere nächste Schritt</h2>
+          <div class="canvas-grid">
+            <div><small>01</small><b>Scope</b><span>Ein Incident-Typ, ein Namespace</span></div>
+            <div><small>02</small><b>Daten &amp; Tools</b><span>Nur was wirklich nötig ist</span></div>
+            <div><small>03</small><b>Eval</b><span>Historische Fälle + erwartete Evidenz</span></div>
+            <div><small>04</small><b>Freigabe</b><span>Explizite Grenze für Writes</span></div>
+            <div><small>05</small><b>Metrik</b><span>Zeit, Qualität, Fehlerrate</span></div>
+            <div><small>06</small><b>Stop</b><span>Abbruch- und Rollback-Kriterium</span></div>
+          </div>
+        </section>
+
+        <section data-section="Abschluss" class="closing">
+          <div class="eyebrow">TAKEAWAYS</div>
+          <h2>Drei Sätze für morgen</h2>
+          <div class="takeaways">
+            <div class="fragment"><b>01</b><p>LLMs erzeugen wahrscheinliche Fortsetzungen — keine garantierten Fakten.</p></div>
+            <div class="fragment"><b>02</b><p>Agents setzen LLMs in einen zielgerichteten Tool-Loop.</p></div>
+            <div class="fragment"><b>03</b><p>Least Privilege, Evidenz und Observability begrenzen den Blast Radius.</p></div>
+          </div>
+        </section>
+
+        <section data-section="Abschluss" class="hero end-slide">
+          <div class="eyebrow">EXIT TICKET</div>
+          <h2>Ein Use Case.<br />Eine offene Frage.<br /><span class="accent">Eine klare Grenze.</span></h2>
+          <p class="lede">Danke.</p>
+        </section>
+      </div>
+    </div>
+
+    <script src="node_modules/reveal.js/dist/reveal.js"></script>
+    <script src="node_modules/reveal.js/plugin/notes/notes.js"></script>
+    <script src="presentation.js"></script>
+  </body>
+</html>
