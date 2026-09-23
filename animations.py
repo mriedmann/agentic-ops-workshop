@@ -18,6 +18,7 @@ from manim import (
     AnimationGroup,
     Arrow,
     BLUE,
+    Brace,
     Circle,
     Create,
     CubicBezier,
@@ -137,11 +138,11 @@ def heading(text: str, kicker: str) -> VGroup:
     return group
 
 
-def pill(text: str, color: str = CYAN, width: float | None = None) -> VGroup:
-    label = Text(text, font_size=23, color=INK)
+def pill(text: str, color: str = CYAN, width: float | None = None, height: float = 0.66, font_size: int = 23) -> VGroup:
+    label = Text(text, font_size=font_size, color=INK)
     box = RoundedRectangle(
         width=width or label.width + 0.5,
-        height=0.66,
+        height=height,
         corner_radius=0.16,
         stroke_color=color,
         stroke_width=2,
@@ -156,73 +157,51 @@ def flow_arrow(start, end, color=CYAN) -> Arrow:
 
 
 class TokenPipeline(SteppedScene):
-    """Text is split into token IDs and mapped to vectors."""
+    """The running example is split into tokens and their vocabulary IDs."""
 
     slug = "token-pipeline"
 
     def construct(self):
-        title = heading("Text wird zu Zahlen", "LLM · Eingabe")
-        sentence = Text("Der Pod startet nicht.", font_size=42, color=INK)
-        sentence.move_to(UP * 1.75)
+        title = heading("Aus Text werden Tokens", "SCHRITT 1 · TOKEN")
+        sentence = Text(EXAMPLE_PROMPT + " …", font_size=34, color=INK)
+        sentence.move_to(UP * 2.1)
         self.play(FadeIn(title, shift=DOWN * 0.15), Write(sentence), run_time=0.9)
         self.step()
 
-        token_words = ["Der", " Pod", " startet", " nicht", "."]
-        token_ids = ["510", "18422", "7912", "902", "13"]
-        colors = [CYAN, MINT, AMBER, CORAL, PURPLE]
-        tokens = VGroup(*[pill(word, color) for word, color in zip(token_words, colors)])
-        tokens.arrange(RIGHT, buff=0.16).move_to(UP * 0.35)
+        # The three pieces of "Setzling" share one color: one word, three tokens.
+        word_colors = [CYAN, MINT, CYAN, AMBER, AMBER, AMBER, MINT, CYAN, MINT]
+        tokens = VGroup(
+            *[pill(text.replace(" ", "␣"), color, height=0.6, font_size=20) for (text, _), color in zip(EXAMPLE_TOKENS, word_colors)]
+        )
+        tokens.arrange(RIGHT, buff=0.14).move_to(UP * 0.1)
         arrow1 = flow_arrow(sentence.get_bottom(), tokens.get_top())
 
         self.play(GrowArrow(arrow1), run_time=0.35)
-        self.play(LaggedStart(*[GrowFromCenter(token) for token in tokens], lag_ratio=0.12), run_time=1.0)
+        self.play(LaggedStart(*[GrowFromCenter(token) for token in tokens], lag_ratio=0.1), run_time=1.1)
+        legend = Text("␣ steht für das führende Leerzeichen", font_size=17, color=MUTED)
+        legend.to_edge(DOWN, buff=0.3)
+        self.play(FadeIn(legend), run_time=0.3)
         self.step()
 
         ids = VGroup()
         id_lines = VGroup()
-        for token, token_id, color in zip(tokens, token_ids, colors):
-            ident = Text(token_id, font_size=20, color=color, font="DejaVu Sans Mono")
-            ident.next_to(token, DOWN, buff=0.43)
+        for token, (_, token_id), color in zip(tokens, EXAMPLE_TOKENS, word_colors):
+            ident = Text(str(token_id), font_size=18, color=color, font="DejaVu Sans Mono")
+            ident.next_to(token, DOWN, buff=0.4)
             ids.add(ident)
             id_lines.add(Line(token.get_bottom(), ident.get_top(), color=color, stroke_opacity=0.5))
+        vocab = Text(f"IDs aus dem Vokabular des Tokenizers ({EXAMPLE_TOKENIZER})", font_size=18, color=MUTED)
+        vocab.next_to(ids, DOWN, buff=0.35)
         self.play(Create(id_lines), FadeIn(ids, shift=DOWN * 0.1), run_time=0.7)
+        self.play(FadeIn(vocab), run_time=0.3)
         self.step()
 
-        vector_box = RoundedRectangle(
-            width=11.7,
-            height=1.3,
-            corner_radius=0.2,
-            stroke_color=EDGE,
-            fill_color=PANEL,
-            fill_opacity=0.9,
-        ).move_to(DOWN * 2.4)
-        vector_label = Text("Embedding-Vektoren", font_size=18, color=MUTED).next_to(vector_box, UP, buff=0.12)
-        vectors = VGroup()
-        for color in colors:
-            bars = VGroup(
-                *[
-                    RoundedRectangle(
-                        width=0.23,
-                        height=0.22 + 0.42 * value,
-                        corner_radius=0.05,
-                        stroke_width=0,
-                        fill_color=color,
-                        fill_opacity=0.4 + 0.5 * value,
-                    )
-                    for value in [0.2, 0.75, 0.45, 0.95, 0.3, 0.62]
-                ]
-            ).arrange(RIGHT, buff=0.07, aligned_edge=DOWN)
-            vectors.add(bars)
-        vectors.arrange(RIGHT, buff=0.5).move_to(vector_box)
-
-        arrow2 = flow_arrow(ids.get_bottom(), vector_box.get_top())
-        self.play(GrowArrow(arrow2), FadeIn(vector_box), FadeIn(vector_label), run_time=0.55)
-        self.play(LaggedStart(*[FadeIn(vector, shift=UP * 0.2) for vector in vectors], lag_ratio=0.12), run_time=0.9)
-        self.step()
-
-        note = Text("Tokens sind Textstücke — keine Wörter und keine Bedeutung an sich.", font_size=22, color=MUTED)
-        note.to_edge(DOWN, buff=0.26)
-        self.play(FadeIn(note), run_time=0.45)
+        setzling = VGroup(*tokens[3:6])
+        brace = Brace(setzling, UP, color=AMBER, buff=0.5)
+        brace_label = Text("ein Wort → drei Tokens", font_size=20, color=AMBER)
+        brace_label.next_to(brace, UP, buff=0.12)
+        self.play(FadeOut(arrow1), run_time=0.25)
+        self.play(GrowFromCenter(brace), FadeIn(brace_label, shift=DOWN * 0.1), run_time=0.6)
         self.step()
 
 

@@ -89,6 +89,7 @@ body,
   margin-bottom: 20px;
 }
 .lede { color: var(--muted); font-size: 0.82em; margin-top: 26px !important; }
+.fineprint.stacked { bottom: 92px; }
 .fineprint { bottom: 24px; color: var(--muted); font-size: 0.48em; left: 76px; position: absolute; }
 .bottom-line {
   border-left: 3px solid var(--cyan);

@@ -128,14 +128,14 @@
         <section data-section="LLM" data-step="text token" class="video-slide">
           <div class="video-copy">
             <div class="eyebrow">SCHRITT 1 · TOKEN</div>
-            <h2>Text wird<br /><span class="accent">adressierbar</span></h2>
+            <h2>Text wird in Tokens<br /><span class="accent">zerlegt und nummeriert</span></h2>
             <span class="fragment video-step" data-video-step="1"></span>
             <ul class="clean-list">
-              <li class="fragment" data-video-step="2">Textstücke, nicht zwingend Wörter</li>
-              <li class="fragment" data-video-step="3">Jedes Token erhält eine ID</li>
-              <li class="fragment" data-video-step="4">IDs werden zu Vektoren</li>
+              <li class="fragment" data-video-step="2">Tokens sind Textstücke, keine Wörter</li>
+              <li class="fragment" data-video-step="3">Jedes Token hat eine feste ID im Vokabular</li>
+              <li class="fragment" data-video-step="4">„Setzling“ allein wird zu drei Tokens</li>
             </ul>
-            <span class="fragment video-step" data-video-step="5"></span>
+            <p class="bottom-line fragment">Das Modell sieht keine Buchstaben, sondern nur eine Folge von Token-IDs.</p>
           </div>
           <div class="media-frame">
             <video muted playsinline preload="none" data-steps="media/token-pipeline.steps.json">
@@ -143,7 +143,11 @@
             </video>
             <div class="media-fallback">Animation nach <code>./scripts/render-animations.sh</code></div>
           </div>
-          <aside class="notes">Wichtig korrigieren: Tokenisierung ist kein Stemming. IDs tragen selbst keine semantische Bedeutung.</aside>
+          <p class="fineprint stacked">Tokenisierung ist kein Stemming: Leerzeichen, Endungen und Groß-/Kleinschreibung bleiben erhalten.</p>
+          <aside class="notes">
+            Lernziel: Tokens sind die Einheiten, mit denen das Modell rechnet – und sie entsprechen nicht den Wörtern.
+            Die ID ist nur eine Adresse im Vokabular und trägt selbst keine Bedeutung. Ein anderer Tokenizer ergibt andere IDs.
+          </aside>
         </section>
 
         <section data-section="LLM" data-step="embedding">
