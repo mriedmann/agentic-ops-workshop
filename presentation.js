@@ -16,6 +16,41 @@ const deck = new Reveal({
   plugins: [RevealNotes],
 });
 
+// GPT pipeline stations (see the "Leitfaden" slide). Slides with data-step="<key> …"
+// get a small rail at the top that highlights their station(s).
+const PIPELINE = [
+  ["text", "Text"],
+  ["token", "Token"],
+  ["embedding", "Embedding"],
+  ["attention", "Attention"],
+  ["ffn", "Feed Forward"],
+  ["residual", "Residual"],
+  ["logits", "Logits"],
+  ["probs", "Probabilities"],
+];
+const LAYER_STEPS = new Set(["attention", "ffn", "residual"]);
+
+function renderStepRails() {
+  document.querySelectorAll(".slides section[data-step]").forEach((slide) => {
+    const current = slide.dataset.step.split(/\s+/);
+    const first = Math.min(...current.map((key) => PIPELINE.findIndex(([k]) => k === key)));
+    const rail = document.createElement("ol");
+    rail.className = "step-rail";
+    rail.setAttribute("aria-label", "Station in der GPT-Pipeline");
+    PIPELINE.forEach(([key, label], index) => {
+      const item = document.createElement("li");
+      item.textContent = label;
+      if (LAYER_STEPS.has(key)) item.classList.add("layer");
+      if (current.includes(key)) item.classList.add("current");
+      else if (index < first) item.classList.add("done");
+      rail.append(item);
+    });
+    slide.prepend(rail);
+  });
+}
+
+renderStepRails();
+
 function updateSection(slide) {
   const label = document.querySelector("#deck-section");
   if (label && slide) label.textContent = (slide.dataset.section || "Workshop").toUpperCase();

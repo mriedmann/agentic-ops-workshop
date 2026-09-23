@@ -103,7 +103,29 @@
           <aside class="notes">Die Formel verbal lesen. Das senkrechte Zeichen bedeutet: unter der Bedingung des bisherigen Kontextes.</aside>
         </section>
 
-        <section data-section="LLM" class="video-slide">
+        <section data-section="LLM" class="roadmap-slide">
+          <div class="eyebrow">LEITFADEN · GPT-PIPELINE</div>
+          <h2>Acht Stationen vom Text zum nächsten Token</h2>
+          <ol class="roadmap">
+            <li class="fragment"><b>01</b><strong>Text</strong><span>Die Eingabe, die fortgesetzt werden soll</span><code>Aus dem kleinen Setzling wurde ein großer</code></li>
+            <li class="fragment"><b>02</b><strong>Token</strong><span>Text wird in Stücke zerlegt, jedes Stück bekommt eine Nummer</span><code>" Set" · "z" · "ling" → 3957 · 89 · 3321</code></li>
+            <li class="fragment"><b>03</b><strong>Embedding</strong><span>Jede Nummer wird zu einem Vektor – einer Liste gelernter Zahlen</span><code>3957 → [0.21, −0.83, …]</code></li>
+            <li class="fragment layer"><b>04</b><strong>Attention</strong><span>Jedes Token holt sich Information von den anderen Tokens</span><code>„großer“ ← „Setzling“</code></li>
+            <li class="fragment layer"><b>05</b><strong>Feed Forward</strong><span>Jedes Token wird für sich mit gelerntem Wissen verarbeitet</span><code>Setzling → Pflanze, wächst</code></li>
+            <li class="fragment layer"><b>06</b><strong>Residual</strong><span>Das Ergebnis wird zum bisherigen Vektor addiert, nichts geht verloren</span><code>x + Änderung</code></li>
+            <li class="fragment"><b>07</b><strong>Logits</strong><span>Jedes mögliche nächste Token bekommt eine Punktzahl</span><code>Baum 6.1 · Busch 4.6 · …</code></li>
+            <li class="fragment"><b>08</b><strong>Probabilities</strong><span>Punktzahlen werden zu Wahrscheinlichkeiten, eines wird gewählt</span><code>Baum 67 % · Busch 15 % · …</code></li>
+          </ol>
+          <div class="layer-label fragment">04–06 = ein Transformer-Layer, × N wiederholt</div>
+          <p class="bottom-line fragment">Die folgenden Folien erklären je eine Station – oben rechts zeigt die Leiste, wo wir gerade sind.</p>
+          <aside class="notes">
+            Lernziel: Die acht Stationen als Landkarte für die nächsten Folien.
+            Durchgängiges Beispiel: „Aus dem kleinen Setzling wurde ein großer …“ – das Modell soll „Baum“ vorhersagen.
+            Die Zahlen bei Logits und Wahrscheinlichkeiten sind zur Veranschaulichung gewählt.
+          </aside>
+        </section>
+
+        <section data-section="LLM" data-step="text token" class="video-slide">
           <div class="video-copy">
             <div class="eyebrow">SCHRITT 1 · TOKEN</div>
             <h2>Text wird<br /><span class="accent">adressierbar</span></h2>
@@ -124,7 +146,7 @@
           <aside class="notes">Wichtig korrigieren: Tokenisierung ist kein Stemming. IDs tragen selbst keine semantische Bedeutung.</aside>
         </section>
 
-        <section data-section="LLM">
+        <section data-section="LLM" data-step="embedding">
           <div class="eyebrow">SCHRITT 2 · EMBEDDINGS</div>
           <h2>Bedeutung als <span class="accent">Geometrie</span></h2>
           <div class="split">
@@ -144,7 +166,7 @@
           <p class="fineprint">Die 2-D-Grafik ist eine Projektion. Reale Repräsentationen haben viele Dimensionen.</p>
         </section>
 
-        <section data-section="LLM" class="video-slide reverse">
+        <section data-section="LLM" data-step="attention" class="video-slide reverse">
           <div class="video-copy">
             <div class="eyebrow">SCHRITT 3 · ATTENTION</div>
             <h2>Dynamisches<br /><span class="accent">Kontext-Routing</span></h2>
@@ -160,7 +182,7 @@
           </div>
         </section>
 
-        <section data-section="LLM" data-auto-animate>
+        <section data-section="LLM" data-step="attention ffn residual">
           <div class="eyebrow">TRANSFORMER · VEREINFACHT</div>
           <h2>Dieselbe Form — viele Male</h2>
           <div class="pipeline">
@@ -182,7 +204,7 @@
           </div>
         </section>
 
-        <section data-section="LLM" class="video-slide">
+        <section data-section="LLM" data-step="logits probs" class="video-slide">
           <div class="video-copy">
             <div class="eyebrow">SCHRITT 4 · DECODE</div>
             <h2>Wahrscheinlich,<br />nicht <span class="accent">gewiss</span></h2>

@@ -316,3 +316,20 @@ body,
   .deck-chrome { display: none; }
   .media-fallback { display: none !important; }
 }
+
+/* GPT pipeline roadmap (Leitfaden) */
+.roadmap { counter-reset: none; list-style: none !important; margin: 0 !important; padding: 0 !important; }
+.roadmap li { align-items: baseline; border-bottom: 1px solid var(--line); display: grid; gap: 18px; border-left: 3px solid transparent; grid-template-columns: 38px 170px 1fr 360px; padding: 9px 0 9px 14px; }
+.roadmap li.layer { border-left-color: var(--amber); }
+.roadmap b { color: var(--cyan); font-family: ui-monospace, monospace; font-size: 0.42em; }
+.roadmap strong { font-size: 0.56em; }
+.roadmap span { color: var(--muted); font-size: 0.46em; }
+.roadmap code { font-size: 0.4em; white-space: nowrap; }
+.layer-label { color: var(--amber); font-size: 0.4em; font-weight: 700; margin-top: 10px; }
+
+/* Step rail: current pipeline station on basics slides (rendered from data-step) */
+.step-rail { display: flex; gap: 4px; list-style: none !important; margin: 0 !important; padding: 0 !important; position: absolute; right: 76px; top: 26px; }
+.step-rail li { border: 1px solid var(--line); border-radius: 5px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; opacity: 0.4; padding: 4px 8px; }
+.step-rail li.layer { border-bottom-color: var(--amber); }
+.step-rail li.done { color: var(--ink); opacity: 0.75; }
+.step-rail li.current { background: rgb(77 227 255 / 14%); border-color: var(--cyan); color: var(--ink); opacity: 1; }
