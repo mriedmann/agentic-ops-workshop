@@ -724,7 +724,7 @@ class TrustBoundary(SteppedScene):
         title = heading("Zwei Pfade, ein Gateway", "AGENTIC OPS · ARCHITEKTUR")
         self.play(FadeIn(title), run_time=0.55)
 
-        operator = pill("Operator", CYAN, width=2.4).move_to(np.array([-6.9, 0, 0]))
+        operator = pill("Operator", CYAN, width=2.4).move_to(np.array([-6.7, 0, 0]))
         opencode = pill("OpenCode", MINT, width=2.5).move_to(np.array([-3.6, 0, 0]))
 
         gateway_box = RoundedRectangle(width=2.9, height=2.5, corner_radius=0.2, stroke_color=AMBER, stroke_width=2, fill_color=PANEL, fill_opacity=0.95)

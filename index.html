@@ -70,7 +70,7 @@
             <div class="timeline-item fragment"><b>04</b><span>Agentic Ops</span><small>25 min</small></div>
             <div class="timeline-item fragment"><b>05</b><span>Showcase &amp; Lab</span><small>70 min</small></div>
           </div>
-          <p class="bottom-line fragment">Leitfrage: Wo endet Sprachgenerierung — und wo beginnt verantwortbare Automation?</p>
+          <p class="bottom-line fragment">Leitfrage für den Tag: Was darf ein Agent in unserem Cluster selbst entscheiden?</p>
         </section>
 
         <section class="chapter" data-section="LLM" data-background-color="#0a1828">
@@ -85,7 +85,7 @@
           <div class="eyebrow">BEGRIFFE · 8 MIN</div>
           <h2>Nicht alles ist „AI“</h2>
           <div class="nested-map" aria-label="Einordnung von AI-Begriffen">
-            <div class="ring ai"><span>Artificial Intelligence</span>
+            <div class="ring ai fragment"><span>Artificial Intelligence</span>
               <div class="ring ml"><span>Machine Learning</span>
                 <div class="ring dl"><span>Deep Learning</span>
                   <div class="ring llm"><span>LLM</span></div>
@@ -302,7 +302,7 @@
           <div class="eyebrow">ZWEI PHASEN</div>
           <h2>Training ≠ Inferenz</h2>
           <div class="compare">
-            <article class="compare-card">
+            <article class="compare-card fragment">
               <span class="tag">TRAINING</span>
               <h3>Gewichte lernen</h3>
               <ul><li>sehr viele Beispiele</li><li>Vorhersagefehler reduzieren</li><li>teuer, batch-orientiert, selten</li></ul>
@@ -503,6 +503,11 @@
             <i></i>
             <article class="fragment"><span>AGENT</span><b>Modell wählt nächste Aktion</b><small>flexibel, mehr Kontrolle nötig</small></article>
           </div>
+          <p class="bottom-line fragment">Je mehr das Modell entscheidet, desto mehr muss die Plattform begrenzen.</p>
+          <aside class="notes">
+            Lernziel: Autonomie ist keine Ja-/Nein-Frage, sondern eine Skala mit unterschiedlichem Blast Radius.
+            Für viele Aufgaben reicht ein Workflow. Ein Agent lohnt sich, wenn der Weg vorher nicht feststeht.
+          </aside>
         </section>
 
         <section data-section="Agents" class="video-slide reverse">
@@ -515,6 +520,7 @@
               <li class="fragment" data-video-step="3">Budget + Stop-Bedingung</li>
             </ul>
             <span class="fragment video-step" data-video-step="4"></span>
+            <p class="bottom-line fragment">Ein Agent ist ein Loop: Das Modell schlägt vor, die Plattform entscheidet, was ausgeführt wird.</p>
           </div>
           <div class="media-frame">
             <video muted playsinline preload="none" data-steps="media/agent-loop.steps.json">
@@ -522,6 +528,10 @@
             </video>
             <div class="media-fallback">Manim · Agent-Loop</div>
           </div>
+          <aside class="notes">
+            Lernziel: Der Loop ist der Unterschied zum Chat – das Modell darf mehrfach handeln und sein Ergebnis prüfen.
+            Wichtig: Budget und Stop-Bedingung gehören zur Definition, sonst läuft der Loop, bis jemand eingreift.
+          </aside>
         </section>
 
         <section data-section="Agents">
@@ -534,12 +544,14 @@
             <div class="fragment"><b>RAG</b><span>relevante externe Inhalte in den Kontext holen</span><code>search → retrieve → prompt</code></div>
             <div class="fragment"><b>Memory</b><span>explizit gespeicherter Zustand über Schritte oder Sessions</span><code>state + lifecycle</code></div>
           </div>
+          <p class="bottom-line fragment">Keiner dieser Bausteine macht das Modell zuverlässiger – sie geben ihm Zugriff.</p>
+          <aside class="notes">Lernziel: Vokabular für den Rest des Tages. Jeder Baustein erweitert, was ein Agent erreichen kann, und damit auch den Schaden im Fehlerfall.</aside>
         </section>
 
         <section data-section="Agents">
           <div class="eyebrow">RAG</div>
           <h2>Wissen holen, <span class="accent">nicht neu trainieren</span></h2>
-          <div class="rag-flow">
+          <div class="rag-flow fragment">
             <div class="rag-node">Frage</div><span>→</span>
             <div class="rag-node">Suche<small>Runbooks · Tickets · Docs</small></div><span>→</span>
             <div class="rag-node">Kontext<small>relevante Passagen</small></div><span>→</span>
@@ -549,6 +561,8 @@
             <p class="fragment"><b>RAG kann</b> Aktualität und Nachvollziehbarkeit verbessern.</p>
             <p class="fragment"><b>RAG kann nicht</b> jede falsche Schlussfolgerung verhindern.</p>
           </div>
+          <p class="bottom-line fragment">RAG ändert den Kontext, nicht das Modell – die Antwort bleibt eine Vorhersage.</p>
+          <aside class="notes">Lernziel: RAG ist Kontextbeschaffung, kein Training. Für den Betrieb heißt das: Qualität der Quellen und Rechte auf diesen Quellen entscheiden mit.</aside>
         </section>
 
         <section data-section="Agents">
@@ -612,13 +626,15 @@
         <section data-section="Agentic Ops">
           <div class="eyebrow">OBSERVABILITY</div>
           <h2>Was müssen wir sehen?</h2>
-          <div class="trace">
+          <div class="trace fragment">
             <div><small>INPUT</small><b>Prompt + Policy-Version</b></div><span>→</span>
             <div><small>MODEL</small><b>Modell + Tokens + Latenz</b></div><span>→</span>
             <div><small>TOOL</small><b>Name + Argumente + Resultat</b></div><span>→</span>
             <div><small>OUTCOME</small><b>Freigabe + Änderung + Erfolg</b></div>
           </div>
           <div class="observability fragment"><span>Trace-ID</span><span>Redaction</span><span>Budget</span><span>Eval</span><span>Audit</span></div>
+          <p class="bottom-line fragment">Ohne durchgehende Spur lässt sich hinterher nicht sagen, warum der Agent das getan hat.</p>
+          <aside class="notes">Lernziel: Ein Agentenlauf braucht dieselbe Nachvollziehbarkeit wie jede andere Automatisierung im Cluster.</aside>
         </section>
 
         <section class="chapter" data-section="Showcase" data-background-color="#0a1828">
@@ -629,7 +645,7 @@
         <section data-section="Showcase">
           <div class="eyebrow">INCIDENT</div>
           <h2>Pod <code>api-7f9</code> startet nicht</h2>
-          <div class="incident-ticket">
+          <div class="incident-ticket fragment">
             <div class="ticket-head"><span>INC-2048</span><span class="severity">SEV-3</span></div>
             <div class="ticket-grid">
               <div><small>SYMPTOM</small><b>CrashLoopBackOff</b></div>
@@ -639,12 +655,13 @@
             </div>
           </div>
           <p class="prompt-to-room fragment">Welche drei Beobachtungen würdet ihr zuerst holen?</p>
+          <p class="bottom-line fragment">Erfolg heißt hier: Ursache mit Belegen – nicht eine schnelle Vermutung.</p>
           <aside class="notes">Antworten sammeln, bevor OpenCode gestartet wird. Dann vergleichen, ob der Agent ähnlich priorisiert.</aside>
         </section>
 
         <section data-section="Showcase">
           <div class="eyebrow">DEMO-FLOW · 35 MIN</div>
-          <h2>Nicht Magie zeigen.<br /><span class="accent">Entscheidungen sichtbar machen.</span></h2>
+          <h2>Was wir in der Demo<br /><span class="accent">sichtbar machen</span></h2>
           <ol class="demo-steps">
             <li class="fragment"><b>01</b><span>Prompt, Policies und Tools offenlegen</span></li>
             <li class="fragment"><b>02</b><span>Toolwahl und strukturierte Argumente beobachten</span></li>
@@ -652,6 +669,8 @@
             <li class="fragment"><b>04</b><span>Änderung nur als Diff oder Command vorschlagen</span></li>
             <li class="fragment"><b>05</b><span>Mit manuellem Debugging-Pfad vergleichen</span></li>
           </ol>
+          <p class="bottom-line fragment">Interessant ist nicht das Ergebnis, sondern welche Schritte der Agent wählt.</p>
+          <aside class="notes">Bei jedem Toolaufruf kurz innehalten: Welche Argumente, welche Rechte, welches Ergebnis?</aside>
         </section>
 
         <section data-section="Showcase">
@@ -663,6 +682,7 @@
             <div class="question-card fragment"><span class="question-number">03</span><p>Wo konnte Injection wirken?</p></div>
             <div class="question-card fragment"><span class="question-number">04</span><p>Wo muss ein Mensch stoppen?</p></div>
           </div>
+          <p class="bottom-line fragment">Gute Agenten-Ergebnisse sind meist Plattformleistung, keine Modellleistung.</p>
         </section>
 
         <section class="chapter" data-section="Lab" data-background-color="#101827">
@@ -673,16 +693,16 @@
         <section data-section="Lab">
           <div class="eyebrow">IDEATION · 8 MIN</div>
           <h2>Ein Satz. Ein Ergebnis.</h2>
-          <div class="sentence-template">
+          <div class="sentence-template fragment">
             <span>Wenn</span><b>[Signal / Ereignis]</b><span>soll der Agent</span><b>[Ergebnis]</b><span>liefern, indem er</span><b>[Daten / Tools]</b><span>nutzt.</span>
           </div>
-          <p class="bottom-line">Eine Karte pro Idee. Noch nicht diskutieren — erst Vielfalt erzeugen.</p>
+          <p class="bottom-line fragment">Eine Karte pro Idee. Noch nicht diskutieren – erst Vielfalt erzeugen.</p>
         </section>
 
         <section data-section="Lab">
           <div class="eyebrow">PRIORISIERUNG · 12 MIN</div>
           <h2>Nutzen gegen Risiko</h2>
-          <div class="matrix-chart">
+          <div class="matrix-chart fragment">
             <span class="y-label">NUTZEN ↑</span><span class="x-label">RISIKO →</span>
             <div class="quadrant q1"><b>PILOTIEREN</b><span>hoch · niedrig</span></div>
             <div class="quadrant q2"><b>ABSICHERN</b><span>hoch · hoch</span></div>
@@ -690,12 +710,13 @@
             <div class="quadrant q4"><b>VERMEIDEN</b><span>niedrig · hoch</span></div>
           </div>
           <div class="chips fragment"><span>read-only?</span><span>reversibel?</span><span>Evidenz?</span><span>messbar?</span></div>
+          <p class="bottom-line fragment">Der erste Pilot sollte oben links liegen: hoher Nutzen, kleiner Schaden im Fehlerfall.</p>
         </section>
 
         <section data-section="Lab">
           <div class="eyebrow">PILOT CANVAS · 5 MIN</div>
           <h2>Der kleinste sichere nächste Schritt</h2>
-          <div class="canvas-grid">
+          <div class="canvas-grid fragment">
             <div><small>01</small><b>Scope</b><span>Ein Incident-Typ, ein Namespace</span></div>
             <div><small>02</small><b>Daten &amp; Tools</b><span>Nur was wirklich nötig ist</span></div>
             <div><small>03</small><b>Eval</b><span>Historische Fälle + erwartete Evidenz</span></div>
@@ -703,6 +724,7 @@
             <div><small>05</small><b>Metrik</b><span>Zeit, Qualität, Fehlerrate</span></div>
             <div><small>06</small><b>Stop</b><span>Abbruch- und Rollback-Kriterium</span></div>
           </div>
+          <p class="bottom-line fragment">Sechs Felder, die vor dem ersten Agentenlauf beantwortet sein sollten.</p>
         </section>
 
         <section data-section="Abschluss" class="closing">

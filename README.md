@@ -4,10 +4,18 @@ Workshop-Unterlagen für erfahrene Linux-/OpenShift-Operator:innen: LLM-Grundlag
 
 ## Inhalt
 
-- `OUTLINE.md` — ausformulierter Ablauf für ca. 4,5 Stunden inklusive Übungen und Demo-Dramaturgie
 - `index.html` — RevealJS-Präsentation mit Speaker Notes
-- `animations.py` — fünf kurze Manim-Szenen für die zentralen Konzepte
+- `animations.py` — acht Manim-Szenen für die zentralen Konzepte, mit Klick-Haltepunkten
+- `OUTLINE.manual.md` — handschriftliche Struktur, Grundlage der Folien
+- `OUTLINE.md` — älterer, ausformulierter Entwurf; nicht die Grundlage der aktuellen Folien
 - `llm-explained.py` — ursprünglicher, umfangreicher Manim-Entwurf (nicht von der Präsentation verwendet)
+
+## Konventionen im Deck
+
+- Jede Inhaltsfolie startet leer: sichtbar sind nur Eyebrow und Titel, alles andere ist ein Fragment.
+- Jede Inhaltsfolie endet mit einer Kernaussage (`class="bottom-line"`), damit sie auch ohne Vortrag trägt.
+- Die Grundlagen-Folien tragen `data-step` und zeigen oben rechts ihre Station in der GPT-Pipeline.
+- Durchgängiges Beispiel: „Aus dem kleinen Setzling wurde ein großer …“ → „Baum“ (Konstanten in `animations.py`).
 
 ## Einmalig einrichten
 
@@ -54,7 +62,7 @@ Anschließend `http://localhost:8000` öffnen.
 npm run check
 ```
 
-Der Check zählt die Slides und meldet noch nicht gerenderte Videos. Inhaltliche Zeitboxen, Moderationshinweise und Kürzungsoptionen stehen in `OUTLINE.md`.
+Der Check zählt die Slides und meldet noch nicht gerenderte Videos. Geprüft werden außerdem die Konventionen oben: leerer Folienstart, Kernaussage je Folie und passende Klick-Haltepunkte.
 
 ## Demo vor Ort
 
