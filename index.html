@@ -204,10 +204,14 @@
         <section data-section="LLM" data-step="attention" class="video-slide reverse">
           <div class="video-copy">
             <div class="eyebrow">SCHRITT 3 · ATTENTION</div>
-            <h2>Dynamisches<br /><span class="accent">Kontext-Routing</span></h2>
-            <p>Jedes Token gewichtet, welche anderen Tokens für seine aktuelle Repräsentation relevant sind.</p>
-            <span class="fragment video-step" data-video-step="1"></span><span class="fragment video-step" data-video-step="2"></span><span class="fragment video-step" data-video-step="3"></span>
-            <div class="mini-callout fragment" data-video-step="4">Viele Attention-Heads lernen unterschiedliche Beziehungen parallel.</div>
+            <h2>Jedes Token schaut<br />auf <span class="accent">die anderen</span></h2>
+            <span class="fragment video-step" data-video-step="1"></span>
+            <ul class="clean-list">
+              <li class="fragment" data-video-step="2">Das aktuelle Token fragt: was ist hier relevant?</li>
+              <li class="fragment" data-video-step="3">Jedes andere Token bekommt ein Gewicht</li>
+              <li class="fragment" data-video-step="4">Der Vektor von „großer“ trägt jetzt den Satz mit</li>
+            </ul>
+            <p class="bottom-line fragment">Attention macht aus festen Token-Vektoren solche, die vom Satz abhängen.</p>
           </div>
           <div class="media-frame">
             <video muted playsinline preload="none" data-steps="media/attention-ops.steps.json">
@@ -215,6 +219,11 @@
             </video>
             <div class="media-fallback">Manim · Self-Attention</div>
           </div>
+          <p class="fineprint stacked">Viele Attention-Heads berechnen solche Gewichte parallel, jeder mit eigenem Fokus.</p>
+          <aside class="notes">
+            Lernziel: Attention ist kein Suchindex, sondern eine gewichtete Mischung über die bisherigen Tokens.
+            Die Gewichte sind hier illustrativ. Wichtig ist das Muster: die Teile von „Setzling“ zählen am meisten.
+          </aside>
         </section>
 
         <section data-section="LLM" data-step="attention ffn residual">

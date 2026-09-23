@@ -347,54 +347,57 @@ class EmbeddingSpace(SteppedScene):
 
 
 class AttentionOps(SteppedScene):
-    """Attention is visualized as contextual routing between tokens."""
+    """The current token collects information from the other tokens."""
 
     slug = "attention-ops"
 
+    # How strongly " großer" attends to each earlier token (illustrative).
+    WEIGHTS = {0: 0.05, 1: 0.04, 2: 0.31, 3: 0.44, 4: 0.09, 5: 0.52, 6: 0.06, 7: 0.05}
+
     def construct(self):
-        title = heading("Kontext wird gewichtet", "Transformer · Self-Attention")
-        subtitle = Text("Welche Tokens helfen, „startet“ einzuordnen?", font_size=23, color=MUTED)
+        title = heading("Das aktuelle Token sammelt Kontext", "SCHRITT 3 · ATTENTION")
+        subtitle = Text("Welche Tokens helfen, „großer“ einzuordnen?", font_size=22, color=MUTED)
         subtitle.next_to(title, DOWN, aligned_edge=LEFT, buff=0.2)
         self.play(FadeIn(title), FadeIn(subtitle), run_time=0.7)
 
-        words = ["Pod", "api-7f9", "startet", "wegen", "ConfigMap", "nicht"]
-        colors = [MUTED, CYAN, AMBER, MUTED, MINT, CORAL]
-        items = VGroup(*[pill(word, color) for word, color in zip(words, colors)])
-        items.arrange(RIGHT, buff=0.25).move_to(DOWN * 0.6)
-        self.play(LaggedStart(*[FadeIn(item, shift=UP * 0.1) for item in items], lag_ratio=0.1), run_time=0.9)
+        word_colors = [MUTED, MUTED, CYAN, AMBER, AMBER, AMBER, MUTED, MUTED, MINT]
+        items = VGroup(
+            *[pill(text.replace(" ", "␣"), color, height=0.6, font_size=20) for (text, _), color in zip(EXAMPLE_TOKENS, word_colors)]
+        )
+        items.arrange(RIGHT, buff=0.14).move_to(DOWN * 1.1)
+        self.play(LaggedStart(*[FadeIn(item, shift=UP * 0.1) for item in items], lag_ratio=0.1), run_time=1.0)
         self.step()
 
-        focus = items[2]
-        focus[0].set_fill(AMBER, opacity=0.32).set_stroke(AMBER, width=4)
-        ripple = Circle(radius=0.5, color=AMBER, stroke_width=3).move_to(focus)
+        focus = items[8]
+        focus[0].set_fill(MINT, opacity=0.3).set_stroke(MINT, width=4)
+        ripple = Circle(radius=0.55, color=MINT, stroke_width=3).move_to(focus)
+        question = Text("„… wurde ein großer  ___“", font_size=24, color=INK).move_to(DOWN * 2.6)
         self.play(Create(ripple), ripple.animate.scale(1.7).set_opacity(0), run_time=0.55)
+        self.play(FadeIn(question, shift=UP * 0.15), run_time=0.4)
         self.step()
 
-        weights = {0: 0.18, 1: 0.36, 3: 0.15, 4: 0.82, 5: 0.91}
-        arcs = VGroup()
-        dots = VGroup()
-        labels = VGroup()
-        for idx, weight in weights.items():
-            start = focus.get_top() + UP * 0.05
-            end = items[idx].get_top() + UP * 0.05
-            height = 0.75 + abs(idx - 2) * 0.2
+        arcs, dots, labels = VGroup(), VGroup(), VGroup()
+        for idx, weight in self.WEIGHTS.items():
+            start_point = focus.get_top() + UP * 0.05
+            end_point = items[idx].get_top() + UP * 0.05
+            height = 0.6 + (8 - idx) * 0.22
             arc = CubicBezier(
-                start,
-                start + UP * height,
-                end + UP * height,
-                end,
-                color=colors[idx],
-                stroke_width=1.5 + 7 * weight,
-                stroke_opacity=0.35 + 0.6 * weight,
+                start_point,
+                start_point + UP * height,
+                end_point + UP * height,
+                end_point,
+                color=word_colors[idx] if weight > 0.2 else MUTED,
+                stroke_width=1.2 + 8 * weight,
+                stroke_opacity=0.3 + 0.6 * weight,
             )
             arcs.add(arc)
-            dot = Dot(radius=0.055, color=WHITE).move_to(start)
-            dots.add(dot)
-            label = Text(f"{weight:.2f}", font_size=16, color=colors[idx])
-            label.move_to(arc.point_from_proportion(0.5) + UP * 0.18)
-            labels.add(label)
+            dots.add(Dot(radius=0.055, color=WHITE).move_to(start_point))
+            if weight > 0.2:
+                label = Text(f"{weight:.2f}", font_size=17, color=word_colors[idx])
+                label.move_to(arc.point_from_proportion(0.88) + UP * 0.22)
+                labels.add(label)
 
-        self.play(LaggedStart(*[Create(arc) for arc in arcs], lag_ratio=0.12), run_time=1.1)
+        self.play(LaggedStart(*[Create(arc) for arc in arcs], lag_ratio=0.1), run_time=1.1)
         self.add(*dots)
         self.play(
             *[MoveAlongPath(dot, arc, rate_func=linear) for dot, arc in zip(dots, arcs)],
@@ -404,10 +407,10 @@ class AttentionOps(SteppedScene):
         self.remove(*dots)
         self.step()
 
-        result = pill("startet  +  Kontext  →  Repräsentation im Satz", MINT, width=7.2)
-        result.move_to(DOWN * 2.65)
-        self.play(FadeIn(result, shift=UP * 0.25), run_time=0.7)
-        note = Text("Gewichte sind kontextabhängig und werden in vielen Köpfen parallel berechnet.", font_size=20, color=MUTED)
+        result = pill("„großer“ + Kontext → es geht um eine Pflanze, die gewachsen ist", MINT, width=10.4, font_size=21)
+        result.move_to(DOWN * 2.6)
+        self.play(FadeOut(question), FadeIn(result, shift=UP * 0.2), run_time=0.7)
+        note = Text("Die Gewichte hängen vom Satz ab und werden in vielen Köpfen parallel berechnet.", font_size=20, color=MUTED)
         note.to_edge(DOWN, buff=0.25)
         self.play(FadeIn(note), run_time=0.45)
         self.step()
