@@ -150,24 +150,55 @@
           </aside>
         </section>
 
-        <section data-section="LLM" data-step="embedding">
-          <div class="eyebrow">SCHRITT 2 · EMBEDDINGS</div>
-          <h2>Bedeutung als <span class="accent">Geometrie</span></h2>
-          <div class="split">
-            <div class="vector-space">
-              <span class="axis axis-x">Dimension 1 →</span>
-              <span class="axis axis-y">Dimension 2 →</span>
-              <span class="point p1">pod</span><span class="point p2">container</span>
-              <span class="point p3">node</span><span class="point p4">apfel</span>
-              <span class="cluster"></span>
-            </div>
-            <div class="explain-stack">
-              <div class="concept fragment"><b>Vektor</b><span>eine lange Liste gelernter Zahlen</span></div>
-              <div class="concept fragment"><b>Ähnlichkeit</b><span>oft als Nähe oder Winkel messbar</span></div>
-              <div class="concept fragment"><b>Kontext</b><span>verschiebt die Repräsentation im Satz</span></div>
-            </div>
+        <section data-section="LLM" data-step="embedding" class="video-slide">
+          <div class="video-copy">
+            <div class="eyebrow">SCHRITT 2 · EMBEDDING</div>
+            <h2>Jedes Token wird zu einer<br /><span class="accent">Liste von Zahlen</span></h2>
+            <ul class="clean-list">
+              <li class="fragment" data-video-step="1">Ein Vektor ist eine lange Liste von Zahlen</li>
+              <li class="fragment" data-video-step="2">Die Zahlen sind gelernt, nicht von Hand gesetzt</li>
+              <li class="fragment" data-video-step="3">Ein anderes Wort ergibt ein anderes Muster</li>
+            </ul>
+            <span class="fragment video-step" data-video-step="4"></span>
+            <p class="bottom-line fragment">Erst als Zahlen wird Bedeutung für das Modell rechenbar.</p>
           </div>
-          <p class="fineprint">Die 2-D-Grafik ist eine Projektion. Reale Repräsentationen haben viele Dimensionen.</p>
+          <div class="media-frame">
+            <video muted playsinline preload="none" data-steps="media/token-vector.steps.json">
+              <source src="media/token-vector.mp4" type="video/mp4" />
+            </video>
+            <div class="media-fallback">Manim · Token als Vektor</div>
+          </div>
+          <p class="fineprint stacked">Hier sechs Zahlen zur Veranschaulichung; reale Modelle nutzen einige tausend je Token.</p>
+          <aside class="notes">
+            Lernziel: Ein Embedding ist eine Liste gelernter Zahlen pro Token – nicht mehr und nicht weniger.
+            Die konkreten Zahlen sind erfunden. Wichtig ist nur: gleiches Token, gleicher Ausgangsvektor.
+          </aside>
+        </section>
+
+        <section data-section="LLM" data-step="embedding" class="video-slide reverse">
+          <div class="video-copy">
+            <div class="eyebrow">SCHRITT 2 · EMBEDDING</div>
+            <h2>Nähe ist Ähnlichkeit,<br /><span class="accent">Richtung ist Beziehung</span></h2>
+            <span class="fragment video-step" data-video-step="1"></span>
+            <ul class="clean-list">
+              <li class="fragment" data-video-step="2">Wörter gleicher Art landen in gemeinsamen Gruppen</li>
+              <li class="fragment" data-video-step="3">Abstand zeigt, wie ähnlich zwei Wörter sind</li>
+              <li class="fragment" data-video-step="4">Setzling → Baum zeigt wie Kalb → Kuh</li>
+            </ul>
+            <p class="bottom-line fragment">Gleiche Beziehungen zwischen Wörtern werden zu gleichen Richtungen im Raum.</p>
+          </div>
+          <div class="media-frame">
+            <video muted playsinline preload="none" data-steps="media/embedding-space.steps.json">
+              <source src="media/embedding-space.mp4" type="video/mp4" />
+            </video>
+            <div class="media-fallback">Manim · Embedding-Raum</div>
+          </div>
+          <p class="fineprint stacked">Die Grafik zeigt zwei Dimensionen. Reale Embeddings haben tausende – das Bild ist eine Projektion.</p>
+          <aside class="notes">
+            Lernziel: Bedeutung steckt in Lage und Richtung, nicht im einzelnen Zahlenwert.
+            Die Analogie „jung → ausgewachsen“ ist der greifbarste Teil: dieselbe Beziehung, derselbe Pfeil.
+            Nachsatz für später: Attention verschiebt diese Vektoren zusätzlich je nach Satz.
+          </aside>
         </section>
 
         <section data-section="LLM" data-step="attention" class="video-slide reverse">

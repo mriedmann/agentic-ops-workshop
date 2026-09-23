@@ -205,6 +205,147 @@ class TokenPipeline(SteppedScene):
         self.step()
 
 
+class TokenVector(SteppedScene):
+    """A token becomes a vector: a list of learned numbers."""
+
+    slug = "token-vector"
+
+    NUMBERS = {
+        "Baum": [0.21, -0.83, 0.04, 1.12, -0.47, 0.60],
+        "Auto": [-0.66, 0.35, 0.88, -0.12, 0.74, -0.29],
+    }
+
+    def vector_row(self, word: str, color: str, y: float) -> tuple[VGroup, VGroup]:
+        token = pill(word, color, width=2.0)
+        numbers = Text(
+            "[ " + "  ".join(f"{value:+.2f}" for value in self.NUMBERS[word]) + "  … ]",
+            font_size=24,
+            color=INK,
+            font="DejaVu Sans Mono",
+        )
+        numbers.next_to(token, RIGHT, buff=1.1)
+        arrow = flow_arrow(token.get_right(), numbers.get_left(), color)
+        row = VGroup(token, arrow, numbers).move_to(UP * y)
+        bars = VGroup(
+            *[
+                RoundedRectangle(
+                    width=0.3,
+                    height=0.25 + 0.5 * abs(value),
+                    corner_radius=0.06,
+                    stroke_width=0,
+                    fill_color=color,
+                    fill_opacity=0.35 + 0.45 * abs(value),
+                )
+                for value in self.NUMBERS[word]
+            ]
+        ).arrange(RIGHT, buff=0.12)
+        bars.next_to(numbers, DOWN, buff=0.3).align_to(numbers, LEFT)
+        return row, bars
+
+    def construct(self):
+        title = heading("Ein Token wird zu einem Vektor", "SCHRITT 2 · EMBEDDING")
+        self.play(FadeIn(title, shift=DOWN * 0.15), run_time=0.5)
+
+        baum_row, baum_bars = self.vector_row("Baum", MINT, 1.3)
+        self.play(FadeIn(baum_row[0], shift=RIGHT * 0.2), run_time=0.5)
+        self.play(GrowArrow(baum_row[1]), Write(baum_row[2]), run_time=0.9)
+        size_note = Text("in echten Modellen einige tausend Zahlen je Token", font_size=19, color=MUTED)
+        size_note.next_to(baum_row[2], UP, buff=0.35)
+        self.play(FadeIn(size_note), run_time=0.35)
+        self.step()
+
+        self.play(LaggedStart(*[GrowFromCenter(bar) for bar in baum_bars], lag_ratio=0.1), run_time=0.7)
+        learned = Text("Die Zahlen sind im Training gelernt, nicht von Hand gesetzt.", font_size=21, color=MUTED)
+        learned.to_edge(DOWN, buff=0.3)
+        self.play(FadeIn(learned), run_time=0.4)
+        self.step()
+
+        auto_row, auto_bars = self.vector_row("Auto", CORAL, -1.4)
+        self.play(FadeIn(auto_row[0], shift=RIGHT * 0.2), GrowArrow(auto_row[1]), Write(auto_row[2]), run_time=0.9)
+        self.play(LaggedStart(*[GrowFromCenter(bar) for bar in auto_bars], lag_ratio=0.1), run_time=0.7)
+        self.step()
+
+        compare = pill("andere Bedeutung → anderes Zahlenmuster", AMBER, width=8.4)
+        compare.move_to(DOWN * 3.05)
+        self.play(FadeOut(learned), FadeIn(compare, shift=UP * 0.2), run_time=0.6)
+        self.step()
+
+
+class EmbeddingSpace(SteppedScene):
+    """Words with similar meaning sit close together; equal relations share direction."""
+
+    slug = "embedding-space"
+
+    CLUSTERS = [
+        ("Pflanzen", MINT, {"Setzling": (-4.5, -1.9), "Baum": (-3.2, -1.2), "Blume": (-4.9, -0.7), "Strauch": (-3.4, -2.3)}),
+        ("Tiere", AMBER, {"Welpe": (-1.5, 0.9), "Hund": (-0.2, 1.6), "Kalb": (-1.0, -0.2), "Kuh": (0.3, 0.5)}),
+        ("Fahrzeuge", CORAL, {"Fahrrad": (2.9, -1.9), "Auto": (3.4, -0.8), "LKW": (4.7, -0.1), "Bus": (4.6, -1.4)}),
+    ]
+    ANALOGIES = [("Setzling", "Baum"), ("Kalb", "Kuh"), ("Welpe", "Hund")]
+
+    def construct(self):
+        title = heading("Ähnliche Bedeutung liegt nah beieinander", "SCHRITT 2 · EMBEDDING")
+        x_axis = Arrow(np.array([-6.2, -3.5, 0]), np.array([5.9, -3.5, 0]), buff=0, color=EDGE, stroke_width=2.5)
+        y_axis = Arrow(np.array([-6.2, -3.5, 0]), np.array([-6.2, 3.0, 0]), buff=0, color=EDGE, stroke_width=2.5)
+        x_label = Text("Dimension 1", font_size=17, color=MUTED).next_to(x_axis, DOWN, buff=0.12).align_to(x_axis, RIGHT)
+        y_label = Text("Dimension 2", font_size=17, color=MUTED).rotate(PI / 2).next_to(y_axis, LEFT, buff=0.12)
+        self.play(FadeIn(title, shift=DOWN * 0.15), Create(x_axis), Create(y_axis), FadeIn(x_label), FadeIn(y_label), run_time=0.8)
+
+        self.dots: dict[str, Dot] = {}
+        groups = []
+        for name, color, words in self.CLUSTERS:
+            items = VGroup()
+            for word, (x, y) in words.items():
+                dot = Dot(np.array([x, y, 0]), radius=0.08, color=color)
+                label = Text(word, font_size=20, color=INK).next_to(dot, UP, buff=0.14)
+                self.dots[word] = dot
+                items.add(VGroup(dot, label))
+            ring = Circle(color=color, stroke_width=1.6, stroke_opacity=0.5).surround(items, buffer_factor=1.12)
+            ring_label = Text(name, font_size=18, color=color).next_to(ring, DOWN, buff=0.1)
+            groups.append((items, VGroup(ring, ring_label)))
+
+        first_items, first_ring = groups[0]
+        self.play(LaggedStart(*[FadeIn(item, shift=UP * 0.15) for item in first_items], lag_ratio=0.15), run_time=0.9)
+        self.play(Create(first_ring[0]), FadeIn(first_ring[1]), run_time=0.5)
+        self.step()
+
+        for items, ring in groups[1:]:
+            self.play(
+                LaggedStart(*[FadeIn(item, shift=UP * 0.15) for item in items], lag_ratio=0.12),
+                run_time=0.7,
+            )
+            self.play(Create(ring[0]), FadeIn(ring[1]), run_time=0.4)
+        self.step()
+
+        near = Line(self.dots["Baum"].get_center(), self.dots["Strauch"].get_center(), color=MINT, stroke_width=3)
+        near_label = Text("nah = ähnlich", font_size=18, color=MINT).next_to(near, RIGHT, buff=0.18)
+        far = Line(self.dots["Baum"].get_center(), self.dots["Auto"].get_center(), color=MUTED, stroke_width=2, stroke_opacity=0.7)
+        far_label = Text("weit = unähnlich", font_size=18, color=MUTED).move_to(far.point_from_proportion(0.72) + DOWN * 0.42)
+        self.play(Create(near), FadeIn(near_label), run_time=0.5)
+        self.play(Create(far), FadeIn(far_label), run_time=0.5)
+        self.step()
+
+        self.play(FadeOut(near), FadeOut(near_label), FadeOut(far), FadeOut(far_label), run_time=0.4)
+        arrows = VGroup(
+            *[
+                Arrow(
+                    self.dots[start].get_center(),
+                    self.dots[end].get_center(),
+                    buff=0.12,
+                    color=CYAN,
+                    stroke_width=4,
+                    max_tip_length_to_length_ratio=0.18,
+                )
+                for start, end in self.ANALOGIES
+            ]
+        )
+        self.play(LaggedStart(*[GrowArrow(arrow) for arrow in arrows], lag_ratio=0.2), run_time=1.0)
+        relation = Text("gleiche Beziehung → gleiche Richtung und Länge", font_size=21, color=CYAN)
+        relation.to_edge(DOWN, buff=0.22)
+        self.play(FadeIn(relation), run_time=0.4)
+        self.step()
+
+
 class AttentionOps(SteppedScene):
     """Attention is visualized as contextual routing between tokens."""
 
