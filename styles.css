@@ -341,3 +341,15 @@ body,
 .phase-card p { color: var(--muted); font-size: 0.45em; }
 .phase-card footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.42em; margin-top: 18px; padding-top: 14px; }
 .phase-card footer b { color: var(--ink); }
+
+/* Prompt injection example and quiz reveal */
+.inject-example { background: var(--panel); border: 1px solid rgb(255 107 107 / 45%); border-radius: 10px; margin-top: 26px; padding: 16px 20px; }
+.inject-example small { color: var(--coral); font-size: 0.32em; font-weight: 800; letter-spacing: 0.16em; }
+.inject-example code { display: block; font-size: 0.42em; margin-top: 10px; }
+.product-card .examples { color: var(--cyan); font-size: 0.42em; margin-top: 10px; }
+.answer-label { color: var(--muted); font-size: 0.7em; margin: 28px auto 0 !important; width: 72%; }
+.answer { margin-top: 14px !important; }
+.quiz-options.fragment.visible .quiz-option { animation: quiz-in 0.45s ease both; }
+.quiz-options .quiz-option:nth-child(2) { animation-delay: 0.15s !important; }
+.quiz-options .quiz-option:nth-child(3) { animation-delay: 0.3s !important; }
+@keyframes quiz-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
