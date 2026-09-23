@@ -1,5 +1,13 @@
 import { readFileSync, existsSync } from "node:fs";
 
+// --strict turns every warning into a failure; used by CI before deploying.
+const strict = process.argv.includes("--strict");
+const warnings = [];
+const warn = (message) => {
+  warnings.push(message);
+  console.warn(message);
+};
+
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const sources = [...html.matchAll(/<source\s+src="([^"]+)"/g)].map((match) => match[1]);
 const sections = [...html.matchAll(/<section(?:\s|>)/g)].length;
@@ -8,8 +16,8 @@ const missing = sources.filter((source) => !existsSync(new URL(`../${source}`, i
 console.log(`Slides: ${sections}`);
 console.log(`Manim videos referenced: ${sources.length}`);
 if (missing.length) {
-  console.warn(`Not rendered yet: ${missing.join(", ")}`);
-  console.warn("Run: ./scripts/render-animations.sh");
+  warn(`Not rendered yet: ${missing.join(", ")}`);
+  warn("Run: ./scripts/render-animations.sh");
 } else {
   console.log("All referenced videos exist.");
 }
@@ -34,7 +42,7 @@ for (const [, slide] of html.matchAll(/<section[^>]*>([\s\S]*?)<\/section>/g)) {
   const actual = [...new Set(steps)].sort((a, b) => a - b).join(",");
   if (expected !== actual) problems.push(`${stepsFile}: ${stops.length} Stops, Folie nutzt Schritte [${actual}].`);
 }
-problems.forEach((problem) => console.warn(`Video-Steps: ${problem}`));
+problems.forEach((problem) => warn(`Video-Steps: ${problem}`));
 if (!problems.length) console.log("All stepped videos match their fragments.");
 
 // Slide conventions: content slides start empty (only eyebrow + heading) and carry a key message.
@@ -77,10 +85,14 @@ for (const [, attrs, slide] of html.matchAll(/<section([^>]*)>([\s\S]*?)<\/secti
   const rest = visibleText(slide);
   if (rest) notEmptyOnEnter.push(`${title}: „${rest.slice(0, 40)}…“`);
 }
-if (noKeyMessage.length) console.warn(`Ohne Kernaussage: ${noKeyMessage.join(" · ")}`);
-if (notEmptyOnEnter.length) console.warn(`Sichtbar schon beim Folienwechsel: ${notEmptyOnEnter.join(" · ")}`);
+if (noKeyMessage.length) warn(`Ohne Kernaussage: ${noKeyMessage.join(" · ")}`);
+if (notEmptyOnEnter.length) warn(`Sichtbar schon beim Folienwechsel: ${notEmptyOnEnter.join(" · ")}`);
 if (!noKeyMessage.length && !notEmptyOnEnter.length) console.log("All content slides start empty and carry a key message.");
 
 if (sections < 25) {
   throw new Error("Expected at least 25 slides.");
+}
+
+if (strict && warnings.length) {
+  throw new Error(`${warnings.length} Warnung(en) im strikten Modus – siehe oben.`);
 }

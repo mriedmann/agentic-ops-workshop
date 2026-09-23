@@ -59,10 +59,30 @@ Anschließend `http://localhost:8000` öffnen.
 ## Prüfen
 
 ```bash
-npm run check
+npm run check          # zählt Folien, meldet Warnungen
+npm run check:strict   # dasselbe, bricht bei Warnungen ab (CI)
 ```
 
 Der Check zählt die Slides und meldet noch nicht gerenderte Videos. Geprüft werden außerdem die Konventionen oben: leerer Folienstart, Kernaussage je Folie und passende Klick-Haltepunkte.
+
+## Veröffentlichung über GitHub Pages
+
+`.github/workflows/pages.yml` prüft bei jedem Push und Pull Request die Folien und veröffentlicht
+den Stand von `main` auf GitHub Pages. Der Build installiert reveal.js über `npm ci` und kopiert
+nur die tatsächlich benötigten Dateien in das Verzeichnis `_site`: `index.html`, `styles.css`,
+`presentation.js`, `media/` sowie `dist/` und `plugin/` von reveal.js samt dessen Lizenz.
+
+Einmalig im Repository einstellen: **Settings → Pages → Source: GitHub Actions**. Danach
+erscheint die Präsentation unter `https://<benutzer>.github.io/<repository>/`.
+
+Die Videos liegen im Repository, das Rendern mit Manim läuft bewusst nicht in der Pipeline.
+Nach Änderungen an `animations.py` also lokal `./scripts/render-animations.sh` ausführen und die
+neuen Dateien aus `media/` mit committen.
+
+## Lizenz
+
+Siehe `LICENSE`. reveal.js wird über npm eingebunden und behält seine eigene MIT-Lizenz, die bei
+der Veröffentlichung mit ausgeliefert wird.
 
 ## Demo vor Ort
 
