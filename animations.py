@@ -716,43 +716,48 @@ class AgentLoop(SteppedScene):
 
 
 class TrustBoundary(SteppedScene):
-    """A request moves through model and tool paths with separate controls."""
+    """Model calls and tool calls both pass through LiteLLM, but stay separate paths."""
 
     slug = "trust-boundary"
 
     def construct(self):
-        title = heading("Zwei Pfade, mehrere Trust Boundaries", "Agentic Ops · Architektur")
+        title = heading("Zwei Pfade, ein Gateway", "AGENTIC OPS · ARCHITEKTUR")
         self.play(FadeIn(title), run_time=0.55)
 
-        specs = [
-            ("Operator", CYAN, LEFT * 6),
-            ("OpenCode", MINT, LEFT * 3.1),
-            ("LiteLLM", AMBER, LEFT * 0.1 + UP * 1.35),
-            ("Modell", PURPLE, RIGHT * 3.2 + UP * 1.35),
-            ("MCP Gateway", CORAL, LEFT * 0.1 + DOWN * 1.45),
-            ("OpenShift API", MINT, RIGHT * 3.2 + DOWN * 1.45),
-        ]
-        nodes = VGroup()
-        for text, color, pos in specs:
-            node = pill(text, color, width=2.35 if text != "OpenShift API" else 2.7).move_to(pos)
-            nodes.add(node)
-        self.play(LaggedStart(*[FadeIn(node, shift=RIGHT * 0.15) for node in nodes], lag_ratio=0.1), run_time=0.9)
+        operator = pill("Operator", CYAN, width=2.4).move_to(np.array([-6.9, 0, 0]))
+        opencode = pill("OpenCode", MINT, width=2.5).move_to(np.array([-3.6, 0, 0]))
+
+        gateway_box = RoundedRectangle(width=2.9, height=2.5, corner_radius=0.2, stroke_color=AMBER, stroke_width=2, fill_color=PANEL, fill_opacity=0.95)
+        gateway_text = VGroup(
+            Text("LiteLLM", font_size=25, color=INK, weight="BOLD"),
+            Text("Model-Proxy", font_size=17, color=MUTED),
+            Text("MCP-Proxy", font_size=17, color=MUTED),
+            Text("Access Control · Metering", font_size=14, color=AMBER),
+        ).arrange(DOWN, buff=0.18)
+        gateway = VGroup(gateway_box, gateway_text.move_to(gateway_box)).move_to(np.array([-0.6, 0, 0]))
+
+        model = pill("Modell", PURPLE, width=2.4).move_to(np.array([2.9, 1.6, 0]))
+        mcp = pill("OpenShift MCP", CORAL, width=3.0).move_to(np.array([2.9, -1.6, 0]))
+        api = pill("OpenShift API", MINT, width=2.9).move_to(np.array([6.5, -1.6, 0]))
+
+        nodes = VGroup(operator, opencode, gateway, model, mcp, api)
+        self.play(LaggedStart(*[FadeIn(node, shift=RIGHT * 0.15) for node in nodes], lag_ratio=0.1), run_time=1.0)
 
         connections = VGroup(
-            flow_arrow(nodes[0].get_right(), nodes[1].get_left(), CYAN),
-            flow_arrow(nodes[1].get_right(), nodes[2].get_left(), AMBER),
-            flow_arrow(nodes[2].get_right(), nodes[3].get_left(), PURPLE),
-            flow_arrow(nodes[1].get_right(), nodes[4].get_left(), CORAL),
-            flow_arrow(nodes[4].get_right(), nodes[5].get_left(), MINT),
+            flow_arrow(operator.get_right(), opencode.get_left(), CYAN),
+            flow_arrow(opencode.get_right(), gateway_box.get_left(), MINT),
+            flow_arrow(gateway_box.get_right() + UP * 0.6, model.get_left(), PURPLE),
+            flow_arrow(gateway_box.get_right() + DOWN * 0.6, mcp.get_left(), CORAL),
+            flow_arrow(mcp.get_right(), api.get_left(), MINT),
         )
         self.play(LaggedStart(*[GrowArrow(arrow) for arrow in connections], lag_ratio=0.12), run_time=1.0)
         self.step()
 
-        model_path = Text("Modellpfad · Routing · Budget", font_size=18, color=AMBER).move_to(UP * 2.25 + RIGHT * 1.5)
-        tool_path = Text("Toolpfad · Schema · RBAC", font_size=18, color=CORAL).move_to(DOWN * 2.35 + RIGHT * 1.5)
+        model_path = Text("Modellpfad · Routing · Budget", font_size=18, color=PURPLE).move_to(np.array([2.9, 2.6, 0]))
+        tool_path = Text("Toolpfad · Tool-Schema · RBAC", font_size=18, color=CORAL).move_to(np.array([4.4, -2.6, 0]))
         self.play(FadeIn(model_path), FadeIn(tool_path), run_time=0.45)
 
-        packets = VGroup(*[Dot(radius=0.08, color=color) for color in [CYAN, AMBER, PURPLE, CORAL, MINT]])
+        packets = VGroup(*[Dot(radius=0.08, color=color) for color in [CYAN, MINT, PURPLE, CORAL, MINT]])
         self.add(*packets)
         self.play(
             *[MoveAlongPath(packet, path, rate_func=linear) for packet, path in zip(packets, connections)],
@@ -762,13 +767,13 @@ class TrustBoundary(SteppedScene):
         self.step()
 
         boundaries = VGroup()
-        for x, label in [(-4.6, "User"), (-1.55, "Gateway"), (1.65, "Backend")]:
-            line = Line(UP * 2.55, DOWN * 2.75, color=EDGE, stroke_width=2, stroke_opacity=0.8).move_to(RIGHT * x)
+        for x, label in [(-5.0, "Nutzer"), (-2.2, "Gateway"), (1.5, "Backend")]:
+            line = Line(UP * 3.0, DOWN * 3.1, color=EDGE, stroke_width=2, stroke_opacity=0.8).move_to(RIGHT * x)
             caption = Text(label, font_size=15, color=MUTED).next_to(line, DOWN, buff=0.08)
             boundaries.add(VGroup(line, caption))
         self.play(LaggedStart(*[Create(boundary) for boundary in boundaries], lag_ratio=0.12), run_time=0.8)
 
-        note = Text("MCP transportiert Fähigkeiten. Autorisierung bleibt Aufgabe der Plattform.", font_size=21, color=MUTED)
+        note = Text("Ein Weg nach draußen. Autorisiert wird trotzdem an jeder Grenze einzeln.", font_size=21, color=MUTED)
         note.to_edge(DOWN, buff=0.18)
         self.play(FadeIn(note), run_time=0.45)
         self.step()

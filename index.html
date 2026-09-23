@@ -554,12 +554,22 @@
         <section data-section="Agents">
           <div class="eyebrow">MCP</div>
           <h2>Ein Protokoll — <span class="accent">kein Sicherheitsmodell</span></h2>
-          <div class="mcp-layout">
+          <div class="mcp-layout fragment">
             <div class="mcp-client"><small>HOST</small><b>OpenCode</b><span>MCP Client</span></div>
             <div class="mcp-wire"><span>JSON-RPC</span><i></i><code>tools/list</code><code>tools/call</code></div>
+            <div class="mcp-client proxy"><small>GATEWAY</small><b>LiteLLM</b><span>MCP-Proxy · Access Control · Metering</span></div>
+            <div class="mcp-wire"><span>JSON-RPC</span><i></i><code>tools/call</code></div>
             <div class="mcp-server"><small>SERVER</small><b>OpenShift MCP</b><span>Tools · Resources</span></div>
           </div>
-          <p class="callout fragment">MCP standardisiert den Anschluss. RBAC autorisiert die tatsächliche Cluster-Aktion.</p>
+          <div class="note-grid fragment">
+            <div><b>Was MCP regelt</b><span>Wie ein Agent erfährt, welche Tools es gibt, und wie er sie aufruft</span></div>
+            <div><b>Was MCP nicht regelt</b><span>Wer was darf – das entscheiden LiteLLM-Policies und das RBAC des Clusters</span></div>
+          </div>
+          <p class="bottom-line fragment">Bei uns laufen auch die MCP-Aufrufe über LiteLLM – ein Weg nach draußen, eine Stelle für Policy und Abrechnung.</p>
+          <aside class="notes">
+            Lernziel: MCP ist ein Anschlussprotokoll, kein Sicherheitsmodell.
+            Für unseren Aufbau wichtig: LiteLLM ist Proxy für Modelle und für MCP. Damit gibt es eine Stelle für Access Control und Metering.
+          </aside>
         </section>
 
         <section class="chapter" data-section="Agentic Ops" data-background-color="#101827">
@@ -570,15 +580,19 @@
         <section data-section="Agentic Ops" class="video-slide architecture-video">
           <div class="video-copy">
             <div class="eyebrow">SHOWCASE-ARCHITEKTUR</div>
-            <h2>Zwei Pfade.<br />Mehrere <span class="accent">Grenzen.</span></h2>
-            <p>Modellzugriff und Toolzugriff brauchen jeweils eigene Identität, Policy und Telemetrie.</p>
-            <span class="fragment video-step" data-video-step="1"></span><span class="fragment video-step" data-video-step="2"></span><span class="fragment video-step" data-video-step="3"></span>
+            <h2>Zwei Pfade,<br />ein <span class="accent">Gateway</span></h2>
+            <ul class="clean-list">
+              <li class="fragment" data-video-step="1">Modell- und Tool-Aufrufe laufen beide über LiteLLM</li>
+              <li class="fragment" data-video-step="2">Getrennt bleiben sie trotzdem: eigenes Schema, eigene Rechte</li>
+              <li class="fragment" data-video-step="3">An jeder Grenze wird neu autorisiert</li>
+            </ul>
+            <p class="bottom-line fragment">Ein Weg nach draußen macht Policy und Abrechnung überhaupt erst durchsetzbar.</p>
           </div>
           <div class="media-frame">
             <video muted playsinline preload="none" data-steps="media/trust-boundary.steps.json">
               <source src="media/trust-boundary.mp4" type="video/mp4" />
             </video>
-            <div class="media-fallback">Manim · Trust Boundaries</div>
+            <div class="media-fallback">Manim · Architektur &amp; Grenzen</div>
           </div>
         </section>
 
