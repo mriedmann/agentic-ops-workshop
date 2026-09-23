@@ -1,4 +1,4 @@
-SVC AI Workshop  
+Agentic Ops Workshop  
 12 Teilnehmer
 
 Struktur

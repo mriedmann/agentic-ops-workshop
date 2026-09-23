@@ -1,4 +1,4 @@
-# SVC AI Workshop
+# Agentic Ops Workshop
 
 Workshop-Unterlagen für erfahrene Linux-/OpenShift-Operator:innen: LLM-Grundlagen, Agenten, MCP und ein kontrollierter Agentic-Ops-Showcase.
 

@@ -1,4 +1,4 @@
-# SVC Workshop: LLMs & Agentic Operations
+# Workshop: LLMs & Agentic Operations
 
 **Zielgruppe:** 12 erfahrene IT-Operations-Techniker:innen mit Linux-/OpenShift-Fokus, ohne vorausgesetztes ML-Wissen  
 **Dauer:** 4 h 30 min inklusive 15 Minuten Pause  
