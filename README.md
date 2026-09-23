@@ -5,7 +5,7 @@ Workshop-Unterlagen für erfahrene Linux-/OpenShift-Operator:innen: LLM-Grundlag
 ## Inhalt
 
 - `index.html` — RevealJS-Präsentation mit Speaker Notes
-- `animations.py` — acht Manim-Szenen für die zentralen Konzepte, mit Klick-Haltepunkten
+- `animations.py` — neun Manim-Szenen für die zentralen Konzepte, mit Klick-Haltepunkten
 - `OUTLINE.manual.md` — handschriftliche Struktur, Grundlage der Folien
 - `OUTLINE.md` — älterer, ausformulierter Entwurf; nicht die Grundlage der aktuellen Folien
 - `llm-explained.py` — ursprünglicher, umfangreicher Manim-Entwurf (nicht von der Präsentation verwendet)

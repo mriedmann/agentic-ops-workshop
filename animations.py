@@ -22,6 +22,7 @@ from manim import (
     Circle,
     Create,
     CubicBezier,
+    DashedLine,
     Dot,
     DOWN,
     FadeIn,
@@ -29,6 +30,7 @@ from manim import (
     GREEN,
     GrowArrow,
     GrowFromCenter,
+    GrowFromEdge,
     LaggedStart,
     LEFT,
     Line,
@@ -37,6 +39,7 @@ from manim import (
     PI,
     PURPLE,
     RED,
+    Rectangle,
     RIGHT,
     RoundedRectangle,
     Scene,
@@ -660,6 +663,78 @@ class NextToken(SteppedScene):
         self.step()
 
 
+class GpuMemory(SteppedScene):
+    """What actually fills the VRAM of an inference GPU."""
+
+    slug = "gpu-memory"
+
+    TOTAL = 80          # GB of a single inference GPU
+    BAR_W = 12.0
+    BAR_H = 1.5
+    LEFT = -6.0
+    Y = 1.55
+
+    def segment(self, start_gb: float, size_gb: float, color: str, opacity: float = 0.85) -> Rectangle:
+        width = size_gb / self.TOTAL * self.BAR_W
+        rect = Rectangle(width=width, height=self.BAR_H, stroke_width=0, fill_color=color, fill_opacity=opacity)
+        rect.move_to(np.array([self.LEFT + start_gb / self.TOTAL * self.BAR_W + width / 2, self.Y, 0]))
+        return rect
+
+    def legend_row(self, index: int, color: str, name: str, value: str, note: str) -> VGroup:
+        y = -0.6 - index * 0.72
+        swatch = Rectangle(width=0.26, height=0.26, stroke_width=0, fill_color=color, fill_opacity=0.85)
+        swatch.move_to(np.array([-5.6, y, 0]))
+        label = Text(name, font_size=20, color=INK).move_to(np.array([-5.3, y, 0]), aligned_edge=LEFT)
+        amount = Text(value, font_size=20, color=color, font="DejaVu Sans Mono")
+        amount.move_to(np.array([-1.7, y, 0]), aligned_edge=RIGHT)
+        hint = Text(note, font_size=17, color=MUTED).move_to(np.array([-1.2, y, 0]), aligned_edge=LEFT)
+        return VGroup(swatch, label, amount, hint)
+
+    def construct(self):
+        title = heading("Wofür der GPU-Speicher draufgeht", "BETRIEB · GPU-SPEICHER")
+        outline = Rectangle(width=self.BAR_W, height=self.BAR_H, stroke_color=EDGE, stroke_width=2, fill_color=PANEL, fill_opacity=0.5)
+        outline.move_to(np.array([self.LEFT + self.BAR_W / 2, self.Y, 0]))
+        scale = Text("eine GPU · 80 GB", font_size=17, color=MUTED).next_to(outline, UP, buff=0.2).align_to(outline, RIGHT)
+        self.play(FadeIn(title, shift=DOWN * 0.15), Create(outline), FadeIn(scale), run_time=0.9)
+        self.step()
+
+        weights = self.segment(0, 16, CYAN)
+        weights_row = self.legend_row(0, CYAN, "Gewichte", "16 GB", "8 Mrd. Parameter × 2 Byte – ab dem Start belegt")
+        self.play(GrowFromEdge(weights, LEFT), run_time=0.6)
+        self.play(FadeIn(weights_row, shift=RIGHT * 0.15), run_time=0.4)
+        self.step()
+
+        kv = self.segment(16, 4, AMBER)
+        kv_row = self.legend_row(1, AMBER, "KV-Cache", "4 GB", "ein Request mit 8.000 Tokens")
+        self.play(GrowFromEdge(kv, LEFT), FadeIn(kv_row, shift=RIGHT * 0.15), run_time=0.7)
+        self.step()
+
+        kv_big = self.segment(16, 40, AMBER)
+        kv_big_row = self.legend_row(1, AMBER, "KV-Cache", "40 GB", "zehn Requests gleichzeitig, jeder mit eigenem Kontext")
+        self.play(
+            kv.animate.become(kv_big),
+            kv_row.animate.become(kv_big_row),
+            run_time=1.0,
+            rate_func=smooth,
+        )
+        self.step()
+
+        activations = self.segment(56, 8, CORAL)
+        act_row = self.legend_row(2, CORAL, "Aktivierungen", "8 GB", "nur während der Rechnung, danach wieder frei")
+        self.play(GrowFromEdge(activations, LEFT), FadeIn(act_row, shift=RIGHT * 0.15), run_time=0.7)
+        self.play(activations.animate.set_fill(opacity=0.3), run_time=0.3)
+        self.play(activations.animate.set_fill(opacity=0.85), run_time=0.3)
+        self.step()
+
+        free = self.segment(64, 16, MUTED, opacity=0.15)
+        free_row = self.legend_row(3, MUTED, "Reserve", "16 GB", "reicht für mehr Kontext – oder für mehr Requests")
+        limit = Text("Nur die Gewichte sind konstant. Alles andere wächst mit Kontext und Parallelität.", font_size=21, color=INK)
+        limit.to_edge(DOWN, buff=0.28)
+        self.play(FadeIn(free), FadeIn(free_row, shift=RIGHT * 0.15), run_time=0.6)
+        self.play(FadeIn(limit), run_time=0.4)
+        self.step()
+
+
 class AgentLoop(SteppedScene):
     """Goal-directed tool use with explicit policy and approval gates."""
 
@@ -716,12 +791,12 @@ class AgentLoop(SteppedScene):
 
 
 class TrustBoundary(SteppedScene):
-    """Model calls and tool calls both pass through LiteLLM, but stay separate paths."""
+    """Every path to a backend runs through LiteLLM — models, cluster tools and the knowledge base."""
 
     slug = "trust-boundary"
 
     def construct(self):
-        title = heading("Zwei Pfade, ein Gateway", "AGENTIC OPS · ARCHITEKTUR")
+        title = heading("Drei Pfade, ein Gateway", "AGENTIC OPS · ARCHITEKTUR")
         self.play(FadeIn(title), run_time=0.55)
 
         operator = pill("Operator", CYAN, width=2.4).move_to(np.array([-6.7, 0, 0]))
@@ -736,9 +811,9 @@ class TrustBoundary(SteppedScene):
         ).arrange(DOWN, buff=0.18)
         gateway = VGroup(gateway_box, gateway_text.move_to(gateway_box)).move_to(np.array([-0.6, 0, 0]))
 
-        model = pill("Modell", PURPLE, width=2.4).move_to(np.array([2.9, 1.6, 0]))
-        mcp = pill("OpenShift MCP", CORAL, width=3.0).move_to(np.array([2.9, -1.6, 0]))
-        api = pill("OpenShift API", MINT, width=2.9).move_to(np.array([6.5, -1.6, 0]))
+        model = pill("Modell", PURPLE, width=2.4).move_to(np.array([2.9, 2.2, 0]))
+        mcp = pill("OpenShift MCP", CORAL, width=3.0).move_to(np.array([2.9, 0.4, 0]))
+        api = pill("OpenShift API", MINT, width=2.9).move_to(np.array([6.4, 0.4, 0]))
 
         nodes = VGroup(operator, opencode, gateway, model, mcp, api)
         self.play(LaggedStart(*[FadeIn(node, shift=RIGHT * 0.15) for node in nodes], lag_ratio=0.1), run_time=1.0)
@@ -746,15 +821,15 @@ class TrustBoundary(SteppedScene):
         connections = VGroup(
             flow_arrow(operator.get_right(), opencode.get_left(), CYAN),
             flow_arrow(opencode.get_right(), gateway_box.get_left(), MINT),
-            flow_arrow(gateway_box.get_right() + UP * 0.6, model.get_left(), PURPLE),
-            flow_arrow(gateway_box.get_right() + DOWN * 0.6, mcp.get_left(), CORAL),
+            flow_arrow(gateway_box.get_right() + UP * 0.8, model.get_left(), PURPLE),
+            flow_arrow(gateway_box.get_right() + DOWN * 0.1, mcp.get_left(), CORAL),
             flow_arrow(mcp.get_right(), api.get_left(), MINT),
         )
         self.play(LaggedStart(*[GrowArrow(arrow) for arrow in connections], lag_ratio=0.12), run_time=1.0)
         self.step()
 
-        model_path = Text("Modellpfad · Routing · Budget", font_size=18, color=PURPLE).move_to(np.array([2.9, 2.6, 0]))
-        tool_path = Text("Toolpfad · Tool-Schema · RBAC", font_size=18, color=CORAL).move_to(np.array([4.4, -2.6, 0]))
+        model_path = Text("Modellpfad · Routing · Budget", font_size=18, color=PURPLE).move_to(np.array([3.6, 3.15, 0]))
+        tool_path = Text("Toolpfad · Tool-Schema · RBAC", font_size=18, color=CORAL).move_to(np.array([4.6, -0.55, 0]))
         self.play(FadeIn(model_path), FadeIn(tool_path), run_time=0.45)
 
         packets = VGroup(*[Dot(radius=0.08, color=color) for color in [CYAN, MINT, PURPLE, CORAL, MINT]])
@@ -768,27 +843,43 @@ class TrustBoundary(SteppedScene):
 
         boundaries = VGroup()
         for x, label in [(-5.0, "Nutzer"), (-2.2, "Gateway"), (1.5, "Backend")]:
-            line = Line(UP * 3.0, DOWN * 3.1, color=EDGE, stroke_width=2, stroke_opacity=0.8).move_to(RIGHT * x)
+            line = Line(UP * 3.3, DOWN * 3.8, color=EDGE, stroke_width=2, stroke_opacity=0.8).move_to(RIGHT * x)
             caption = Text(label, font_size=15, color=MUTED).next_to(line, DOWN, buff=0.08)
             boundaries.add(VGroup(line, caption))
         self.play(LaggedStart(*[Create(boundary) for boundary in boundaries], lag_ratio=0.12), run_time=0.8)
 
         note = Text("Ein Weg nach draußen. Autorisiert wird trotzdem an jeder Grenze einzeln.", font_size=21, color=MUTED)
-        note.to_edge(DOWN, buff=0.18)
+        note.to_edge(DOWN, buff=0.16)
         self.play(FadeIn(note), run_time=0.45)
         self.step()
 
-        # RAG branch: AnythingLLM is a second client of the gateway, with its own store.
-        anythingllm = pill("AnythingLLM", MINT, width=2.9).move_to(np.array([-3.6, -2.45, 0]))
-        pgvector = pill("pgvector", MUTED, width=2.4).move_to(np.array([0.2, -2.45, 0]))
-        rag_arrows = VGroup(
-            flow_arrow(operator.get_bottom(), anythingllm.get_left(), CYAN),
-            flow_arrow(anythingllm.get_right(), pgvector.get_left(), MUTED),
-            flow_arrow(anythingllm.get_top(), gateway_box.get_bottom(), MINT),
+        # Knowledge path: the RAG service is just another MCP server behind the gateway.
+        knowledge = pill("AnythingLLM · MCP", MINT, width=3.4).move_to(np.array([2.9, -1.9, 0]))
+        pgvector = pill("pgvector", MUTED, width=2.4).move_to(np.array([6.4, -1.9, 0]))
+        ingest = pill("Ingest-Job", MUTED, width=2.6).move_to(np.array([2.9, -3.3, 0]))
+        knowledge_arrows = VGroup(
+            flow_arrow(gateway_box.get_right() + DOWN * 1.0, knowledge.get_left(), MINT),
+            flow_arrow(knowledge.get_right(), pgvector.get_left(), MUTED),
+            flow_arrow(ingest.get_top(), knowledge.get_bottom(), MUTED),
         )
-        rag_label = Text("RAG-Pfad · Modell und Embeddings über das Gateway, Vektoren direkt", font_size=17, color=MINT)
-        rag_label.move_to(np.array([-1.7, -3.75, 0]))
-        self.play(FadeOut(note), FadeIn(anythingllm, shift=UP * 0.15), FadeIn(pgvector, shift=UP * 0.15), run_time=0.7)
-        self.play(LaggedStart(*[GrowArrow(arrow) for arrow in rag_arrows], lag_ratio=0.15), run_time=0.9)
-        self.play(FadeIn(rag_label), run_time=0.4)
+        back = DashedLine(
+            knowledge.get_left() + LEFT * 0.1 + DOWN * 0.15,
+            gateway_box.get_bottom() + DOWN * 0.05,
+            color=AMBER,
+            stroke_width=2,
+            dash_length=0.12,
+        )
+        back.add_tip(tip_length=0.22, tip_width=0.18)
+        back_label = Text("Modelle + Embeddings", font_size=14, color=AMBER).move_to(np.array([0.4, -2.35, 0]))
+        knowledge_path = Text("Wissenspfad · Belege", font_size=18, color=MINT).move_to(np.array([5.3, -2.85, 0]))
+        ingest_label = Text("läuft im Hintergrund", font_size=14, color=MUTED)
+        ingest_label.next_to(ingest, RIGHT, buff=0.3)
+
+        self.play(FadeOut(note), FadeIn(knowledge, shift=LEFT * 0.15), FadeIn(pgvector, shift=LEFT * 0.15), run_time=0.6)
+        self.play(GrowArrow(knowledge_arrows[0]), GrowArrow(knowledge_arrows[1]), FadeIn(knowledge_path), run_time=0.7)
+        self.play(Create(back), FadeIn(back_label), run_time=0.6)
+        self.play(FadeIn(ingest, shift=UP * 0.15), GrowArrow(knowledge_arrows[2]), FadeIn(ingest_label), run_time=0.7)
+        closing = Text("Auch die Wissensbasis ist ein MCP-Server hinter demselben Gateway.", font_size=21, color=MUTED)
+        closing.to_edge(DOWN, buff=0.16)
+        self.play(FadeIn(closing), run_time=0.4)
         self.step()

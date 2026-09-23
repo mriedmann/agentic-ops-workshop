@@ -399,20 +399,43 @@
         <section data-section="Betrieb">
           <div class="eyebrow">SPEICHER 3 · AKTIVIERUNGEN</div>
           <h2>Und dann ist da noch<br />der <span class="accent">Arbeitsspeicher der Rechnung</span></h2>
-          <div class="note-grid wide">
-            <div class="fragment"><b>Was ist das?</b><span>Die Zwischenergebnisse, die während eines Durchlaufs entstehen – Ergebnis jeder Multiplikation, bevor das nächste Layer folgt</span></div>
-            <div class="fragment"><b>Wie lange?</b><span>Nur für die Dauer der Rechnung. Danach wird der Platz wieder frei</span></div>
-            <div class="fragment"><b>Wovon abhängig?</b><span>Von der Batch-Größe: viele Tokens gleichzeitig heißt mehr Zwischenergebnisse gleichzeitig</span></div>
+          <div class="note-grid wide quiz-cards">
+            <div class="fragment"><b>Was ist das?</b><span class="fragment">Die Zwischenergebnisse eines Durchlaufs – das Ergebnis jeder Multiplikation, bevor das nächste Layer folgt.</span></div>
+            <div class="fragment"><b>Wie lange bleibt es?</b><span class="fragment">Nur für die Dauer der Rechnung. Danach wird der Platz wieder frei.</span></div>
+            <div class="fragment"><b>Wovon hängt es ab?</b><span class="fragment">Von der Batch-Größe: viele Tokens gleichzeitig heißt viele Zwischenergebnisse gleichzeitig.</span></div>
           </div>
-          <div class="budget fragment">
-            <span>Gewichte<small>konstant</small></span>
-            <span>KV-Cache<small>wächst mit Kontext</small></span>
-            <span>Aktivierungen<small>wächst mit Batch</small></span>
-          </div>
-          <p class="bottom-line fragment">Drei Posten teilen sich den GPU-Speicher – nur einer davon ist konstant.</p>
+          <p class="bottom-line fragment">Aktivierungen sind kurzlebig – aber sie wachsen mit der Zahl gleichzeitig verarbeiteter Tokens.</p>
           <aside class="notes">
-            Lernziel: Das Speicherbudget einer Inferenz-GPU besteht aus drei Posten.
-            Typischer Betriebsfehler: nur die Modellgröße einplanen und dann bei vielen parallelen Requests OOM laufen.
+            Lernziel: Aktivierungen sind der dritte Speicherposten – kurzlebig, aber abhängig von der Batch-Größe.
+            Ablauf: jede Frage zuerst laut stellen und Antworten aus dem Publikum einsammeln, erst dann den nächsten Klick.
+            Die Zusammenschau der drei Posten kommt auf der nächsten Folie.
+          </aside>
+        </section>
+
+        <section data-section="Betrieb" class="video-slide reverse">
+          <div class="media-frame">
+            <video muted playsinline preload="none" data-steps="media/gpu-memory.steps.json">
+              <source src="media/gpu-memory.mp4" type="video/mp4" />
+            </video>
+            <div class="media-fallback">Manim · GPU-Speicher</div>
+          </div>
+          <div class="video-copy">
+            <div class="eyebrow">BETRIEB · GPU-SPEICHER</div>
+            <h2>Drei Posten teilen sich<br /><span class="accent">eine GPU</span></h2>
+            <span class="fragment video-step" data-video-step="1"></span>
+            <ul class="clean-list">
+              <li class="fragment" data-video-step="2">Gewichte: konstant, unabhängig von der Last</li>
+              <li class="fragment" data-video-step="3">KV-Cache: wächst mit der Kontextlänge …</li>
+              <li class="fragment" data-video-step="4">… und mit jedem parallelen Request</li>
+              <li class="fragment" data-video-step="5">Aktivierungen: Spitze während der Rechnung</li>
+            </ul>
+            <span class="fragment video-step" data-video-step="6"></span>
+            <p class="bottom-line fragment">Nur die Gewichte sind konstant – Kontext und Parallelität bestimmen den Rest.</p>
+          </div>
+          <aside class="notes">
+            Lernziel: Ein Speicherbudget aufstellen können – und sehen, welcher Posten bei Last zuerst wächst.
+            Beispielzahlen für ein 8-Mrd.-Modell in FP16 auf einer 80-GB-GPU. Bei kleineren Karten verschiebt sich alles nach unten, die Verhältnisse bleiben.
+            Typischer Betriebsfehler: nur die Modellgröße einplanen und dann bei vielen parallelen Requests in OOM laufen.
           </aside>
         </section>
 
@@ -437,8 +460,11 @@
               <footer>bestimmt die Ausgabegeschwindigkeit · <b>Tokens/s</b></footer>
             </article>
           </div>
-          <div class="observability fragment"><span>TTFT</span><span>Tokens/s</span><span>Queue Time</span><span>Kontextlänge</span><span>Parallele Requests</span></div>
-          <p class="fineprint stacked">Ein langer Prompt kostet Wartezeit am Anfang, eine lange Antwort kostet Zeit pro Token.</p>
+          <div class="calc">
+            <div class="fragment"><b>TTFT</b><span>Zeit bis zum ersten Token – wächst mit der Länge des Prompts</span><i>Prefill</i></div>
+            <div class="fragment"><b>Tokens/s</b><span>Tempo der Ausgabe – hängt an Decode und KV-Cache</span><i>Decode</i></div>
+            <div class="fragment"><b>Queue Time</b><span>Wartezeit vor dem Start – steigt mit parallelen Requests</span><i>davor</i></div>
+          </div>
           <p class="bottom-line fragment">Prefill ist rechenlastig, Decode ist speicherlastig – beide Phasen misst man getrennt.</p>
           <aside class="notes">
             Lernziel: Die beiden Phasen erklären, warum es zwei getrennte Latenzkennzahlen gibt.
@@ -593,19 +619,20 @@
           <div class="eyebrow">EXKURS · ANYTHINGLLM</div>
           <h2>Ein fertiges RAG-System,<br /><span class="accent">aus vier Bausteinen</span></h2>
           <div class="rag-flow fragment">
-            <div class="rag-node">Frage<small>in einem Workspace</small></div><span>→</span>
+            <div class="rag-node">Agent fragt<small>über MCP, nicht über die UI</small></div><span>→</span>
             <div class="rag-node">pgvector<small>die vier nächsten Chunks</small></div><span>→</span>
             <div class="rag-node">Kontext<small>Chunks + Frage</small></div><span>→</span>
             <div class="rag-node hot">Modell über LiteLLM<small>Antwort + Fundstellen</small></div>
           </div>
           <div class="note-grid wide">
-            <div class="fragment"><b>Workspace</b><span>Die Mandanteneinheit: eigene Dokumente, eigener Bereich in der Vektor-DB, eigene Berechtigungen.</span></div>
+            <div class="fragment"><b>Workspace</b><span>Die Wissensbasis: eigene Dokumente, eigener Bereich in der Vektor-DB. Befüllt wird sie von eigenen Ingest-Prozessen.</span></div>
             <div class="fragment"><b>Vier Slots</b><span>LLM, Embedder, Vektor-DB, Transkription. Bei uns liefert LiteLLM Modell und Embeddings, die Vektoren liegen in pgvector.</span></div>
             <div class="fragment"><b>Stellschrauben</b><span>Chunk 1.000 Zeichen, Overlap 20, Ähnlichkeitsschwelle 0,25, vier Snippets je Antwort – Defaults, je Workspace änderbar.</span></div>
           </div>
           <p class="bottom-line fragment">Die Antwortqualität entscheidet sich an Chunking, Schwelle und Quellenauswahl – nicht am Modell.</p>
           <aside class="notes">
             Lernziel: AnythingLLM ist die RAG-Mechanik als fertiges Produkt – und jeder Baustein daraus ist austauschbar.
+            Bei uns steht der Dienst im Cluster und wird dem Agenten als MCP-Server angeboten. Die Weboberfläche brauchen wir nur im Ausnahmefall.
             Betriebsregel: Den Embedder nachträglich zu wechseln bedeutet, alle Dokumente neu einzubetten.
             Dasselbe Dokument in mehreren Workspaces wird nicht doppelt eingebettet, belegt aber mehrfach Platz in der Vektor-DB.
             „Document Pinning“ schiebt ein ganzes Dokument in den Kontext statt nur die Treffer – das sprengt schnell Token-Budget und Kontextfenster.
@@ -641,12 +668,12 @@
         <section data-section="Agentic Ops" class="video-slide architecture-video">
           <div class="video-copy">
             <div class="eyebrow">SHOWCASE-ARCHITEKTUR</div>
-            <h2>Zwei Pfade,<br />ein <span class="accent">Gateway</span></h2>
+            <h2>Drei Pfade,<br />ein <span class="accent">Gateway</span></h2>
             <ul class="clean-list">
               <li class="fragment" data-video-step="1">Modell- und Tool-Aufrufe laufen beide über LiteLLM</li>
               <li class="fragment" data-video-step="2">Getrennt bleiben sie trotzdem: eigenes Schema, eigene Rechte</li>
               <li class="fragment" data-video-step="3">An jeder Grenze wird neu autorisiert</li>
-              <li class="fragment" data-video-step="4">AnythingLLM hängt als zweiter Client am selben Gateway</li>
+              <li class="fragment" data-video-step="4">Auch die Wissensbasis ist nur ein MCP-Server dahinter</li>
             </ul>
             <p class="bottom-line fragment">Ein Weg nach draußen macht Policy und Abrechnung überhaupt erst durchsetzbar.</p>
           </div>
@@ -656,28 +683,13 @@
             </video>
             <div class="media-fallback">Manim · Architektur &amp; Grenzen</div>
           </div>
-        </section>
-
-        <section data-section="Agentic Ops">
-          <div class="eyebrow">BAUSTEIN · ANYTHINGLLM</div>
-          <h2>Ein Pod, ein Volume,<br />ein <span class="accent">Single-Writer</span></h2>
-          <div class="note-grid wide">
-            <div class="fragment"><b>Was im Pod liegt</b><span>Datenbank, geparste Dokumente und Embedding-Cache liegen zusammen in einem Verzeichnis auf einem RWO-Volume. Start mit 8 GiB, für Produktion eher 16 GiB.</span></div>
-            <div class="fragment"><b>Was außerhalb liegt</b><span>Modell und Embeddings über LiteLLM, die Vektoren in pgvector. Dafür gelten dort die üblichen Postgres-Regeln für Backup und Wartung.</span></div>
-            <div class="fragment"><b>Was OpenShift blockiert</b><span>Die Beispiel-Manifeste setzen feste UID, fsGroup und SYS_ADMIN. Unter restricted-v2 müssen diese Felder raus; Alternative ist das OpenShift-Image von Red Hat.</span></div>
-          </div>
-          <div class="budget fragment">
-            <span>replicas: 1<small>Recreate statt Rolling Update</small></span>
-            <span>Volume<small>Snapshot vor jedem Update</small></span>
-            <span>Image-Tag<small>pinnen, Migrationen laufen nur vorwärts</small></span>
-          </div>
-          <p class="bottom-line fragment">AnythingLLM skaliert nicht in die Breite – geplant wird über Volume, Backup und Update-Fenster.</p>
           <aside class="notes">
-            Lernziel: Der Zustand liegt an einer Stelle, und die ist nicht hochverfügbar. Auch mit externer Vektor-DB bleibt die interne Datenbank Single-Writer.
-            Es gibt kein offizielles Backup-Verfahren: Volume-Snapshot bei gestopptem Pod ist der pragmatische Weg, dazu die pgvector-Datenbank.
-            Updates: Image-Tag pinnen, vorher Snapshot. Die Schema-Migrationen laufen beim Start und lassen sich nicht zurückrollen.
-            SYS_ADMIN braucht nur das eingebaute Web-Scraping. Ob ohne die Berechtigung alles Übrige läuft, vor dem Kundentermin selbst testen.
-            Weil Embeddings über LiteLLM laufen, muss der Container kein Embedding-Modell herunterladen – ein Egress-Problem weniger.
+            Lernziel: Ein Weg nach draußen, aber drei getrennte Pfade mit eigenen Rechten.
+            AnythingLLM ist im Ist-Setup kein Werkzeug für Menschen: Es hängt als MCP-Server am Gateway, befüllt wird es von eigenen Ingest-Prozessen, die UI ist Ausnahmefall.
+            Betrieb von AnythingLLM, falls gefragt wird: ein Pod mit RWO-Volume, Datenbank und Dokumente liegen zusammen an einer Stelle, deshalb replicas 1 und Recreate statt Rolling Update.
+            Vor jedem Update ein Volume-Snapshot, Image-Tag pinnen – die Schema-Migrationen laufen nur vorwärts.
+            Unter restricted-v2 müssen feste UID, fsGroup und SYS_ADMIN aus den Beispiel-Manifesten raus; Alternative ist das OpenShift-Image von Red Hat.
+            Vektoren liegen in pgvector, Modelle und Embeddings kommen über LiteLLM – dort gelten die jeweils üblichen Backup-Regeln.
           </aside>
         </section>
 
@@ -725,9 +737,14 @@
               <div><small>GRENZE</small><b>Keine Änderung ohne Freigabe</b></div>
             </div>
           </div>
-          <p class="prompt-to-room fragment">Welche drei Beobachtungen würdet ihr zuerst holen?</p>
-          <p class="bottom-line fragment">Erfolg heißt hier: Ursache mit Belegen – nicht eine schnelle Vermutung.</p>
-          <aside class="notes">Antworten sammeln, bevor OpenCode gestartet wird. Dann vergleichen, ob der Agent ähnlich priorisiert.</aside>
+          <p class="prompt-to-room fragment">Übung · 2 Minuten: Welche drei Belege würdet ihr zuerst holen – und in welcher Reihenfolge?</p>
+          <div class="chips fragment"><span>Pod-Events</span><span>Container-Logs</span><span>ConfigMap</span><span>Image-Tag</span><span>Resource-Limits</span><span>RBAC</span></div>
+          <p class="bottom-line fragment">Gleich vergleichen wir eure Reihenfolge mit der des Agenten – und ob er seine Diagnose belegt.</p>
+          <aside class="notes">
+            Lernziel: Eine eigene Erwartung bilden, bevor der Agent läuft. Nur so lässt sich beurteilen, ob seine Arbeit gut war.
+            Ablauf: zwei Minuten in Zweiergruppen, drei Belege auf eine Karte, kurz einsammeln und sichtbar notieren.
+            Nach der Demo im Debrief wieder aufgreifen: Was hat der Agent zuerst geholt, was hat er ausgelassen?
+          </aside>
         </section>
 
         <section data-section="Showcase">
@@ -744,6 +761,17 @@
           <aside class="notes">Bei jedem Toolaufruf kurz innehalten: Welche Argumente, welche Rechte, welches Ergebnis?</aside>
         </section>
 
+        <section class="break-slide" data-section="Showcase" data-background-color="#091a2d">
+          <div class="eyebrow">LIVE · 35 MIN</div>
+          <h2>Demo<span class="accent">.</span></h2>
+          <div class="break-prompt">Wir wechseln in Terminal und Cluster.</div>
+          <aside class="notes">
+            Vorher: Namespace zurücksetzen, Incident neu auslösen, Secrets aus der Ansicht nehmen.
+            Fallback bereithalten: Screen Recording oder gespeicherte Tool-Ausgaben, falls der Cluster klemmt.
+            Bei jedem Tool-Aufruf kurz innehalten: Welche Argumente, welche Rechte, welches Ergebnis?
+          </aside>
+        </section>
+
         <section data-section="Showcase">
           <div class="eyebrow">DEBRIEF</div>
           <h2>Vier Fragen an das System</h2>
@@ -756,21 +784,39 @@
           <p class="bottom-line fragment">Gute Agenten-Ergebnisse sind meist Plattformleistung, keine Modellleistung.</p>
         </section>
 
-        <section class="chapter" data-section="Lab" data-background-color="#101827">
+        <section class="chapter" data-section="Transfer" data-background-color="#101827">
           <span class="chapter-number">06</span>
-          <div><div class="eyebrow">TRANSFER</div><h2>Use-Case<br /><span class="accent">Lab</span></h2></div>
+          <div><div class="eyebrow">TRANSFER</div><h2>Wo hilft uns das<br /><span class="accent">im Betrieb?</span></h2></div>
         </section>
 
-        <section data-section="Lab">
-          <div class="eyebrow">IDEATION · 8 MIN</div>
+        <section data-section="Transfer">
+          <div class="eyebrow">VORSCHLAG · ABLAUF</div>
+          <h2>1-2-4-Alle<span class="accent">.</span></h2>
+          <ol class="demo-steps">
+            <li class="fragment"><b>1 MIN</b><span>Allein: jede Person notiert für sich Ideen, noch ohne Austausch</span></li>
+            <li class="fragment"><b>2 MIN</b><span>Zu zweit: Ideen vorstellen, vergleichen, schärfen</span></li>
+            <li class="fragment"><b>4 MIN</b><span>Zu viert: auf drei Ideen einigen und je einen Titel finden</span></li>
+            <li class="fragment"><b>ALLE</b><span>Titel vorstellen, Punkte vergeben, die drei stärksten diskutieren</span></li>
+          </ol>
+          <p class="bottom-line fragment">Erst allein denken, dann teilen – so kommen auch die leisen Ideen durch.</p>
+          <aside class="notes">
+            Das ist ein Vorschlag für den Ablauf, kein Dogma – bei kleiner Runde können die Vierergruppen entfallen.
+            Zeiten laut ansagen und einhalten, sonst franst die Phase aus. Karten und Stifte liegen bereit.
+            Danach geht es mit der Bewertung nach Nutzen und Risiko weiter.
+          </aside>
+        </section>
+
+        <section data-section="Transfer">
+          <div class="eyebrow">SCHRITT 01 · ALLEIN</div>
           <h2>Ein Satz. Ein Ergebnis.</h2>
           <div class="sentence-template fragment">
             <span>Wenn</span><b>[Signal / Ereignis]</b><span>soll der Agent</span><b>[Ergebnis]</b><span>liefern, indem er</span><b>[Daten / Tools]</b><span>nutzt.</span>
           </div>
-          <p class="bottom-line fragment">Eine Karte pro Idee. Noch nicht diskutieren – erst Vielfalt erzeugen.</p>
+          <p class="bottom-line fragment">Eine Karte pro Idee, in diesem Satzmuster – noch nicht diskutieren, erst Vielfalt erzeugen.</p>
+          <aside class="notes">Die Schablone ist die Schreibhilfe für die erste Minute. Wer mehrere Ideen hat, schreibt mehrere Karten.</aside>
         </section>
 
-        <section data-section="Lab">
+        <section data-section="Transfer">
           <div class="eyebrow">PRIORISIERUNG · 12 MIN</div>
           <h2>Nutzen gegen Risiko</h2>
           <div class="matrix-chart fragment">
@@ -784,7 +830,7 @@
           <p class="bottom-line fragment">Der erste Pilot sollte oben links liegen: hoher Nutzen, kleiner Schaden im Fehlerfall.</p>
         </section>
 
-        <section data-section="Lab">
+        <section data-section="Transfer">
           <div class="eyebrow">PILOT CANVAS · 5 MIN</div>
           <h2>Der kleinste sichere nächste Schritt</h2>
           <div class="canvas-grid fragment">
@@ -809,9 +855,14 @@
         </section>
 
         <section data-section="Abschluss" class="hero end-slide">
-          <div class="eyebrow">EXIT TICKET</div>
+          <div class="eyebrow">EXIT TICKET · 5 MIN</div>
           <h2>Ein Use Case.<br />Eine offene Frage.<br /><span class="accent">Eine klare Grenze.</span></h2>
-          <p class="lede">Danke.</p>
+          <p class="lede">Drei Zeilen auf eine Karte: Wo ein Agent euch konkret helfen würde, was dafür noch unklar ist, und wo er auf keinen Fall allein entscheiden darf.</p>
+          <p class="lede end-note">Wir sammeln die Karten ein – sie sind die Grundlage für den Pilot-Vorschlag und die offenen Punkte danach. Danke.</p>
+          <aside class="notes">
+            Karten wirklich einsammeln und im Nachgang zusammenfassen, sonst verpufft die Runde.
+            Wer mag, liest seine Grenze laut vor – das ist oft der ehrlichste Teil des Tages.
+          </aside>
         </section>
       </div>
     </div>

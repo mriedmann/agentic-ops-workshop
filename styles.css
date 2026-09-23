@@ -354,3 +354,8 @@ body,
 .quiz-options .quiz-option:nth-child(2) { animation-delay: 0.15s !important; }
 .quiz-options .quiz-option:nth-child(3) { animation-delay: 0.3s !important; }
 @keyframes quiz-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* Mini quiz cards: question first, answer on the next click */
+.quiz-cards > div { display: flex; flex-direction: column; }
+.quiz-cards b { margin-bottom: 14px; }
+.end-slide .end-note { color: var(--muted); font-size: 0.58em; margin-top: 18px !important; }
