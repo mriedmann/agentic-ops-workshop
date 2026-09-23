@@ -222,16 +222,6 @@ body,
 .temperature span:last-child { text-align: right; }
 
 
-/* Transformer */
-.pipeline { align-items: center; display: flex; justify-content: center; margin-top: 75px; }
-.pipe-node { background: var(--panel); border: 1px solid var(--cyan); border-radius: 11px; font-size: 0.64em; font-weight: 700; padding: 22px 34px; text-align: center; }
-.pipe-node small { color: var(--muted); display: block; font-size: 0.6em; font-weight: 400; margin-top: 8px; }
-.pipe-node.hot { border-color: var(--coral); }
-.pipe-arrow { color: var(--muted); margin: 0 22px; }
-.pipe-repeat { color: var(--amber); font-size: 0.62em; font-weight: 800; margin-left: 12px; }
-.transformer-stack { border: 1px solid var(--amber); border-radius: 11px; padding: 9px; }
-.transformer-stack div { background: var(--panel-2); border-radius: 6px; font-size: 0.48em; margin: 5px; padding: 10px 24px; text-align: center; }
-.ops-analogy { display: grid; font-size: 0.48em; gap: 9px 20px; grid-template-columns: 150px 1fr; margin: 50px auto 0; width: 720px; }
 .ops-analogy span { color: var(--cyan); }.ops-analogy b { font-weight: 500; }
 
 /* Compare */

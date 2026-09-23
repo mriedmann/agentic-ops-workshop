@@ -226,26 +226,32 @@
           </aside>
         </section>
 
-        <section data-section="LLM" data-step="attention ffn residual">
-          <div class="eyebrow">TRANSFORMER · VEREINFACHT</div>
-          <h2>Dieselbe Form — viele Male</h2>
-          <div class="pipeline">
-            <div class="pipe-node">Tokens<small>+ Position</small></div>
-            <span class="pipe-arrow">→</span>
-            <div class="transformer-stack">
-              <div>Self-Attention</div>
-              <div>Feed Forward</div>
-              <div>Residual + Norm</div>
-            </div>
-            <span class="pipe-repeat">× N</span>
-            <span class="pipe-arrow">→</span>
-            <div class="pipe-node hot">Logits<small>Scores je Token</small></div>
+        <section data-section="LLM" data-step="attention ffn residual" class="video-slide reverse">
+          <div class="media-frame">
+            <video muted playsinline preload="none" data-steps="media/transformer-block.steps.json">
+              <source src="media/transformer-block.mp4" type="video/mp4" />
+            </video>
+            <div class="media-fallback">Manim · Transformer-Layer</div>
           </div>
-          <div class="ops-analogy fragment">
-            <span>Attention</span><b>Welche Signale sind relevant?</b>
-            <span>Feed Forward</span><b>Wie transformiere ich sie?</b>
-            <span>Residual</span><b>Was soll erhalten bleiben?</b>
+          <div class="video-copy">
+            <div class="eyebrow">TRANSFORMER · EIN LAYER</div>
+            <h2>Ein Layer,<br /><span class="accent">viele Male</span></h2>
+            <span class="fragment video-step" data-video-step="1"></span>
+            <ul class="clean-list">
+              <li class="fragment" data-video-step="2">Attention mischt Information zwischen den Tokens</li>
+              <li class="fragment" data-video-step="3">Residual + Norm: das Alte bleibt, das Neue kommt dazu</li>
+              <li class="fragment" data-video-step="4">Feed Forward verarbeitet jedes Token für sich</li>
+              <li class="fragment" data-video-step="5">Dieselbe Form wiederholt sich Layer für Layer</li>
+            </ul>
+            <span class="fragment video-step" data-video-step="6"></span>
           </div>
+          <p class="fineprint stacked">Jeder Layer hat dieselbe Form, aber eigene gelernte Gewichte.</p>
+          <p class="bottom-line fragment">Jeder Layer verschiebt den Vektor ein Stück – der letzte Stand wird zu den Logits.</p>
+          <aside class="notes">
+            Lernziel: Ein Transformer ist keine Blackbox mit Zauberformel, sondern dieselben drei Operationen in vielen Schichten.
+            Attention ist die einzige Stelle, an der Tokens Information austauschen. Feed Forward arbeitet strikt pro Token.
+            Residual erklärt, warum tiefe Netze trainierbar bleiben: der alte Zustand geht nie verloren.
+          </aside>
         </section>
 
         <section data-section="LLM" data-step="logits probs" class="video-slide">

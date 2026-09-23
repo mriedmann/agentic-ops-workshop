@@ -416,6 +416,130 @@ class AttentionOps(SteppedScene):
         self.step()
 
 
+class TransformerBlock(SteppedScene):
+    """One transformer layer: attention, feed forward, each with residual + norm."""
+
+    slug = "transformer-block"
+
+    def vector_bars(self, values, color, width=0.16) -> VGroup:
+        return VGroup(
+            *[
+                RoundedRectangle(
+                    width=width,
+                    height=0.16 + 0.4 * abs(value),
+                    corner_radius=0.04,
+                    stroke_width=0,
+                    fill_color=color,
+                    fill_opacity=0.4 + 0.5 * abs(value),
+                )
+                for value in values
+            ]
+        ).arrange(RIGHT, buff=0.05)
+
+    def block(self, label: str, sub: str, color: str, width: float = 2.5) -> VGroup:
+        box = RoundedRectangle(width=width, height=1.15, corner_radius=0.16, stroke_color=color, stroke_width=2, fill_color=PANEL, fill_opacity=0.9)
+        name = Text(label, font_size=21, color=INK)
+        detail = Text(sub, font_size=15, color=MUTED)
+        text = VGroup(name, detail).arrange(DOWN, buff=0.12).move_to(box)
+        return VGroup(box, text)
+
+    def add_node(self, color: str) -> VGroup:
+        circle = Circle(radius=0.3, color=color, stroke_width=2, fill_color=PANEL, fill_opacity=0.95)
+        plus = Text("+", font_size=26, color=color).move_to(circle)
+        caption = Text("Residual\n+ Norm", font_size=14, color=MUTED, line_spacing=0.6)
+        caption.next_to(circle, DOWN, buff=0.16)
+        return VGroup(circle, plus, caption)
+
+    def construct(self):
+        title = heading("Ein Layer: mischen, verarbeiten, dazuzählen", "TRANSFORMER · EIN LAYER")
+        self.play(FadeIn(title, shift=DOWN * 0.15), run_time=0.5)
+
+        row_y = 0.35
+        tokens = VGroup(
+            *[pill(text.replace(" ", "␣"), MUTED, height=0.5, font_size=16) for text, _ in EXAMPLE_TOKENS]
+        )
+        tokens.arrange(RIGHT, buff=0.1).move_to(UP * 2.75)
+        tokens[8][0].set_stroke(MINT, width=3).set_fill(MINT, opacity=0.22)
+        start_vector = self.vector_bars([0.3, 0.9, 0.5, 0.7, 0.4], MINT)
+        start_vector.move_to(np.array([-6.3, row_y, 0]))
+        start_label = Text("Vektor von „␣großer“", font_size=15, color=MUTED).next_to(start_vector, DOWN, buff=0.22)
+        self.play(LaggedStart(*[FadeIn(token, shift=DOWN * 0.1) for token in tokens], lag_ratio=0.07), run_time=0.8)
+        self.play(FadeIn(start_vector, shift=RIGHT * 0.2), FadeIn(start_label), run_time=0.5)
+        self.step()
+
+        attention = self.block("Self-Attention", "mischt über alle Tokens", CYAN, width=2.9)
+        attention.move_to(np.array([-3.6, row_y, 0]))
+        feeds = VGroup(
+            *[
+                Line(token.get_bottom(), attention.get_top(), color=CYAN, stroke_width=1.2, stroke_opacity=0.35)
+                for token in tokens
+            ]
+        )
+        in_arrow = flow_arrow(start_vector.get_right(), attention[0].get_left(), MINT)
+        self.play(GrowArrow(in_arrow), FadeIn(attention), run_time=0.6)
+        self.play(Create(feeds), run_time=0.7)
+        self.step()
+
+        add1 = self.add_node(AMBER)
+        add1.move_to(np.array([-1.0, row_y, 0]))
+        arrow1 = flow_arrow(attention[0].get_right(), add1[0].get_left(), CYAN)
+        residual1 = CubicBezier(
+            start_vector.get_top() + UP * 0.1,
+            start_vector.get_top() + UP * 1.1,
+            add1[0].get_top() + UP * 1.1,
+            add1[0].get_top() + UP * 0.05,
+            color=AMBER,
+            stroke_width=2.5,
+        )
+        residual_label = Text("der alte Vektor bleibt erhalten", font_size=15, color=AMBER)
+        residual_label.move_to(residual1.point_from_proportion(0.5) + UP * 0.25)
+        self.play(GrowArrow(arrow1), FadeIn(add1), run_time=0.5)
+        self.play(Create(residual1), FadeIn(residual_label), run_time=0.7)
+        self.step()
+
+        feed_forward = self.block("Feed Forward", "jedes Token für sich", PURPLE, width=2.7)
+        feed_forward.move_to(np.array([1.6, row_y, 0]))
+        add2 = self.add_node(AMBER)
+        add2.move_to(np.array([3.9, row_y, 0]))
+        arrow2 = flow_arrow(add1[0].get_right(), feed_forward[0].get_left(), AMBER)
+        arrow3 = flow_arrow(feed_forward[0].get_right(), add2[0].get_left(), PURPLE)
+        residual2 = CubicBezier(
+            add1[0].get_top() + UP * 0.05,
+            add1[0].get_top() + UP * 0.9,
+            add2[0].get_top() + UP * 0.9,
+            add2[0].get_top() + UP * 0.05,
+            color=AMBER,
+            stroke_width=2.5,
+        )
+        weights_note = Text("hier sitzt der größte Teil der Gewichte", font_size=15, color=MUTED)
+        weights_note.next_to(feed_forward, DOWN, buff=0.7)
+        self.play(GrowArrow(arrow2), FadeIn(feed_forward), run_time=0.5)
+        self.play(GrowArrow(arrow3), FadeIn(add2), Create(residual2), FadeIn(weights_note), run_time=0.7)
+        self.step()
+
+        out_vector = self.vector_bars([0.5, 0.6, 0.9, 0.3, 0.8], MINT)
+        out_vector.move_to(np.array([5.6, row_y, 0]))
+        out_arrow = flow_arrow(add2[0].get_right(), out_vector.get_left(), MINT)
+        loop = CubicBezier(
+            out_vector.get_bottom() + DOWN * 0.15,
+            out_vector.get_bottom() + DOWN * 1.9,
+            start_vector.get_bottom() + DOWN * 1.9,
+            start_vector.get_bottom() + DOWN * 0.5,
+            color=CYAN,
+            stroke_width=3,
+        )
+        loop_label = Text("× N Layer – in großen Modellen einige Dutzend", font_size=19, color=CYAN)
+        loop_label.move_to(loop.point_from_proportion(0.5) + DOWN * 0.3)
+        self.play(GrowArrow(out_arrow), FadeIn(out_vector), run_time=0.5)
+        self.play(Create(loop), FadeIn(loop_label), run_time=0.9)
+        self.step()
+
+        final = Text("Nach dem letzten Layer wird der Vektor des letzten Tokens zu Logits.", font_size=21, color=INK)
+        final.to_edge(DOWN, buff=0.25)
+        self.play(FadeOut(weights_note), FadeIn(final), out_vector.animate.set_color(AMBER), run_time=0.7)
+        self.step()
+
+
 class NextToken(SteppedScene):
     """A context update changes the next-token distribution."""
 
