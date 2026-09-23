@@ -777,3 +777,18 @@ class TrustBoundary(SteppedScene):
         note.to_edge(DOWN, buff=0.18)
         self.play(FadeIn(note), run_time=0.45)
         self.step()
+
+        # RAG branch: AnythingLLM is a second client of the gateway, with its own store.
+        anythingllm = pill("AnythingLLM", MINT, width=2.9).move_to(np.array([-3.6, -2.45, 0]))
+        pgvector = pill("pgvector", MUTED, width=2.4).move_to(np.array([0.2, -2.45, 0]))
+        rag_arrows = VGroup(
+            flow_arrow(operator.get_bottom(), anythingllm.get_left(), CYAN),
+            flow_arrow(anythingllm.get_right(), pgvector.get_left(), MUTED),
+            flow_arrow(anythingllm.get_top(), gateway_box.get_bottom(), MINT),
+        )
+        rag_label = Text("RAG-Pfad · Modell und Embeddings über das Gateway, Vektoren direkt", font_size=17, color=MINT)
+        rag_label.move_to(np.array([-1.7, -3.75, 0]))
+        self.play(FadeOut(note), FadeIn(anythingllm, shift=UP * 0.15), FadeIn(pgvector, shift=UP * 0.15), run_time=0.7)
+        self.play(LaggedStart(*[GrowArrow(arrow) for arrow in rag_arrows], lag_ratio=0.15), run_time=0.9)
+        self.play(FadeIn(rag_label), run_time=0.4)
+        self.step()

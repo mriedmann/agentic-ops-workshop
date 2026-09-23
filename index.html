@@ -566,6 +566,53 @@
         </section>
 
         <section data-section="Agents">
+          <div class="eyebrow">EXKURS · VEKTOR-DB</div>
+          <h2>Wie aus Dokumenten<br /><span class="accent">durchsuchbare Vektoren</span> werden</h2>
+          <div class="rag-flow fragment">
+            <div class="rag-node">Dokument<small>Runbook · Ticket · Doku</small></div><span>→</span>
+            <div class="rag-node">Chunks<small>Abschnitte à ca. 1.000 Zeichen</small></div><span>→</span>
+            <div class="rag-node">Embedding<small>ein Vektor je Chunk</small></div><span>→</span>
+            <div class="rag-node hot">Vektor-DB<small>Vektor + Fundstelle</small></div>
+          </div>
+          <div class="note-grid">
+            <div class="fragment"><b>Beim Suchen</b><span>Die Frage wird mit demselben Modell eingebettet. Die Datenbank liefert die Chunks, deren Vektoren am nächsten liegen.</span></div>
+            <div class="fragment"><b>Warum das geht</b><span>Dieselbe Nähe wie bei Setzling und Baum – nur für ganze Textabschnitte statt einzelner Tokens.</span></div>
+          </div>
+          <div class="calc fragment">
+            <div><b>Speicher</b><span>2.000 Chunks (rund 1.000 Seiten) × 384 Zahlen × 4 Byte</span><i>≈ 3 MiB</i></div>
+          </div>
+          <p class="bottom-line fragment">Eine Vektor-DB findet ähnlich klingende Stellen – nicht die richtigen.</p>
+          <aside class="notes">
+            Lernziel: Retrieval ist Ähnlichkeitssuche über Textabschnitte, keine Datenbankabfrage mit exakter Bedingung.
+            Wichtige Abgrenzung: Diese Embeddings sind nicht dieselben wie die Token-Embeddings aus Kapitel 01 – gleiche Idee, eigenes Modell, eigener Zweck.
+            Mit einem größeren Embedding-Modell (1.536 Zahlen statt 384) wären es rund 12 MiB. Die Vektoren sind fast nie das Platzproblem, die Originaldateien schon.
+          </aside>
+        </section>
+
+        <section data-section="Agents">
+          <div class="eyebrow">EXKURS · ANYTHINGLLM</div>
+          <h2>Ein fertiges RAG-System,<br /><span class="accent">aus vier Bausteinen</span></h2>
+          <div class="rag-flow fragment">
+            <div class="rag-node">Frage<small>in einem Workspace</small></div><span>→</span>
+            <div class="rag-node">pgvector<small>die vier nächsten Chunks</small></div><span>→</span>
+            <div class="rag-node">Kontext<small>Chunks + Frage</small></div><span>→</span>
+            <div class="rag-node hot">Modell über LiteLLM<small>Antwort + Fundstellen</small></div>
+          </div>
+          <div class="note-grid wide">
+            <div class="fragment"><b>Workspace</b><span>Die Mandanteneinheit: eigene Dokumente, eigener Bereich in der Vektor-DB, eigene Berechtigungen.</span></div>
+            <div class="fragment"><b>Vier Slots</b><span>LLM, Embedder, Vektor-DB, Transkription. Bei uns liefert LiteLLM Modell und Embeddings, die Vektoren liegen in pgvector.</span></div>
+            <div class="fragment"><b>Stellschrauben</b><span>Chunk 1.000 Zeichen, Overlap 20, Ähnlichkeitsschwelle 0,25, vier Snippets je Antwort – Defaults, je Workspace änderbar.</span></div>
+          </div>
+          <p class="bottom-line fragment">Die Antwortqualität entscheidet sich an Chunking, Schwelle und Quellenauswahl – nicht am Modell.</p>
+          <aside class="notes">
+            Lernziel: AnythingLLM ist die RAG-Mechanik als fertiges Produkt – und jeder Baustein daraus ist austauschbar.
+            Betriebsregel: Den Embedder nachträglich zu wechseln bedeutet, alle Dokumente neu einzubetten.
+            Dasselbe Dokument in mehreren Workspaces wird nicht doppelt eingebettet, belegt aber mehrfach Platz in der Vektor-DB.
+            „Document Pinning“ schiebt ein ganzes Dokument in den Kontext statt nur die Treffer – das sprengt schnell Token-Budget und Kontextfenster.
+          </aside>
+        </section>
+
+        <section data-section="Agents">
           <div class="eyebrow">MCP</div>
           <h2>Ein Protokoll — <span class="accent">kein Sicherheitsmodell</span></h2>
           <div class="mcp-layout fragment">
@@ -599,6 +646,7 @@
               <li class="fragment" data-video-step="1">Modell- und Tool-Aufrufe laufen beide über LiteLLM</li>
               <li class="fragment" data-video-step="2">Getrennt bleiben sie trotzdem: eigenes Schema, eigene Rechte</li>
               <li class="fragment" data-video-step="3">An jeder Grenze wird neu autorisiert</li>
+              <li class="fragment" data-video-step="4">AnythingLLM hängt als zweiter Client am selben Gateway</li>
             </ul>
             <p class="bottom-line fragment">Ein Weg nach draußen macht Policy und Abrechnung überhaupt erst durchsetzbar.</p>
           </div>
@@ -608,6 +656,29 @@
             </video>
             <div class="media-fallback">Manim · Architektur &amp; Grenzen</div>
           </div>
+        </section>
+
+        <section data-section="Agentic Ops">
+          <div class="eyebrow">BAUSTEIN · ANYTHINGLLM</div>
+          <h2>Ein Pod, ein Volume,<br />ein <span class="accent">Single-Writer</span></h2>
+          <div class="note-grid wide">
+            <div class="fragment"><b>Was im Pod liegt</b><span>Datenbank, geparste Dokumente und Embedding-Cache liegen zusammen in einem Verzeichnis auf einem RWO-Volume. Start mit 8 GiB, für Produktion eher 16 GiB.</span></div>
+            <div class="fragment"><b>Was außerhalb liegt</b><span>Modell und Embeddings über LiteLLM, die Vektoren in pgvector. Dafür gelten dort die üblichen Postgres-Regeln für Backup und Wartung.</span></div>
+            <div class="fragment"><b>Was OpenShift blockiert</b><span>Die Beispiel-Manifeste setzen feste UID, fsGroup und SYS_ADMIN. Unter restricted-v2 müssen diese Felder raus; Alternative ist das OpenShift-Image von Red Hat.</span></div>
+          </div>
+          <div class="budget fragment">
+            <span>replicas: 1<small>Recreate statt Rolling Update</small></span>
+            <span>Volume<small>Snapshot vor jedem Update</small></span>
+            <span>Image-Tag<small>pinnen, Migrationen laufen nur vorwärts</small></span>
+          </div>
+          <p class="bottom-line fragment">AnythingLLM skaliert nicht in die Breite – geplant wird über Volume, Backup und Update-Fenster.</p>
+          <aside class="notes">
+            Lernziel: Der Zustand liegt an einer Stelle, und die ist nicht hochverfügbar. Auch mit externer Vektor-DB bleibt die interne Datenbank Single-Writer.
+            Es gibt kein offizielles Backup-Verfahren: Volume-Snapshot bei gestopptem Pod ist der pragmatische Weg, dazu die pgvector-Datenbank.
+            Updates: Image-Tag pinnen, vorher Snapshot. Die Schema-Migrationen laufen beim Start und lassen sich nicht zurückrollen.
+            SYS_ADMIN braucht nur das eingebaute Web-Scraping. Ob ohne die Berechtigung alles Übrige läuft, vor dem Kundentermin selbst testen.
+            Weil Embeddings über LiteLLM laufen, muss der Container kein Embedding-Modell herunterladen – ein Egress-Problem weniger.
+          </aside>
         </section>
 
         <section data-section="Agentic Ops">
