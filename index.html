@@ -256,11 +256,16 @@
 
         <section data-section="LLM" data-step="logits probs" class="video-slide">
           <div class="video-copy">
-            <div class="eyebrow">SCHRITT 4 · DECODE</div>
+            <div class="eyebrow">SCHRITT 4 · LOGITS &amp; PROBABILITIES</div>
             <h2>Wahrscheinlich,<br />nicht <span class="accent">gewiss</span></h2>
-            <p>Aus Scores wird eine Verteilung. Ein Auswahlverfahren bestimmt das nächste Token.</p>
-            <span class="fragment video-step" data-video-step="1"></span><span class="fragment video-step" data-video-step="2"></span><span class="fragment video-step" data-video-step="3"></span>
-            <div class="temperature fragment"><span>deterministischer</span><i></i><span>variabler</span></div>
+            <ul class="clean-list">
+              <li class="fragment" data-video-step="1">Logits: eine Punktzahl je möglichem Token</li>
+              <li class="fragment" data-video-step="2">Softmax macht daraus Wahrscheinlichkeiten</li>
+              <li class="fragment" data-video-step="3">Niedrige Temperatur schärft die Verteilung</li>
+              <li class="fragment" data-video-step="4">Hohe Temperatur macht sie flacher</li>
+              <li class="fragment" data-video-step="5">Erst die Auswahl macht daraus ein Token</li>
+            </ul>
+            <p class="bottom-line fragment">Dasselbe Modell kann bei gleicher Eingabe verschiedene Antworten geben.</p>
           </div>
           <div class="media-frame">
             <video muted playsinline preload="none" data-steps="media/next-token.steps.json">
@@ -268,6 +273,11 @@
             </video>
             <div class="media-fallback">Manim · Next-Token-Verteilung</div>
           </div>
+          <p class="fineprint stacked">Zahlen illustrativ. Neben der Temperatur begrenzen Top-k und Top-p die Auswahl.</p>
+          <aside class="notes">
+            Lernziel: Die Ausgabe ist eine Verteilung, kein Fakt. Die Auswahl daraus ist konfigurierbar.
+            Für den Betrieb wichtig: Temperatur 0 macht Antworten reproduzierbarer, aber nicht richtiger.
+          </aside>
         </section>
 
         <section data-section="LLM">

@@ -541,58 +541,122 @@ class TransformerBlock(SteppedScene):
 
 
 class NextToken(SteppedScene):
-    """A context update changes the next-token distribution."""
+    """Logits become probabilities; temperature reshapes them; one token is picked."""
 
     slug = "next-token"
 
+    TRACK = 5.6
+
+    def make_bar(self, track: RoundedRectangle, color: str, value: float) -> RoundedRectangle:
+        bar = RoundedRectangle(
+            width=max(0.12, self.TRACK * value),
+            height=0.4,
+            corner_radius=0.12,
+            stroke_width=0,
+            fill_color=color,
+            fill_opacity=0.9,
+        )
+        return bar.move_to(track.get_center()).align_to(track, LEFT)
+
     def construct(self):
-        title = heading("Eine Verteilung, dann eine Auswahl", "LLM · Ausgabe")
-        prompt = Text("Der Pod ist im Status …", font_size=36, color=INK)
-        prompt.move_to(UP * 2.0 + LEFT * 2.2)
-        self.play(FadeIn(title), Write(prompt), run_time=0.85)
+        title = heading("Von Punktzahlen zur Auswahl", "SCHRITT 4 · LOGITS & PROBABILITIES")
+        prompt = VGroup(
+            Text(EXAMPLE_PROMPT, font_size=27, color=INK),
+            Text("____", font_size=27, color=MINT),
+        ).arrange(RIGHT, buff=0.2)
+        prompt.move_to(UP * 2.6 + LEFT * 0.7)
+        self.play(FadeIn(title), Write(prompt), run_time=0.9)
 
-        names = ["CrashLoopBackOff", "Pending", "Running", "Unknown"]
-        values = [0.43, 0.27, 0.21, 0.09]
-        colors = [CORAL, AMBER, MINT, MUTED]
-        rows = VGroup()
-        bars = []
-        percents = []
-        for name, value, color in zip(names, values, colors):
-            label = Text(name, font_size=22, color=INK, font="DejaVu Sans Mono")
-            label.stretch_to_fit_width(2.7)
-            track = RoundedRectangle(width=5.8, height=0.38, corner_radius=0.12, stroke_color=EDGE, fill_color=EDGE, fill_opacity=0.25)
-            bar = RoundedRectangle(width=5.8 * value, height=0.38, corner_radius=0.12, stroke_width=0, fill_color=color, fill_opacity=0.9)
-            bar.align_to(track, LEFT)
-            pct = Text(f"{value:.0%}", font_size=19, color=color, font="DejaVu Sans Mono")
-            row = VGroup(label, track, bar, pct).arrange(RIGHT, buff=0.2)
-            rows.add(row)
-            bars.append(bar)
-            percents.append(pct)
-        rows.arrange(DOWN, buff=0.3, aligned_edge=LEFT).move_to(DOWN * 0.2)
-        self.play(LaggedStart(*[FadeIn(row, shift=RIGHT * 0.25) for row in rows], lag_ratio=0.12), run_time=1.0)
+        words = [text.replace(" ", "␣") for text, _, _ in EXAMPLE_CANDIDATES]
+        logits = [logit for _, _, logit in EXAMPLE_CANDIDATES]
+        colors = [MINT, AMBER, CYAN, CORAL, MUTED]
+
+        rows, tracks, pct_slots, pct_texts = VGroup(), [], [], []
+        for word, logit, color in zip(words, logits, colors):
+            label = Text(word, font_size=21, color=INK, font="DejaVu Sans Mono")
+            label_slot = VGroup(RoundedRectangle(width=1.9, height=0.42, stroke_width=0, fill_opacity=0), label)
+            score = Text(f"{logit:+.1f}", font_size=19, color=color, font="DejaVu Sans Mono")
+            score_slot = VGroup(RoundedRectangle(width=1.0, height=0.42, stroke_width=0, fill_opacity=0), score)
+            track = RoundedRectangle(width=self.TRACK, height=0.4, corner_radius=0.12, stroke_color=EDGE, fill_color=EDGE, fill_opacity=0.25)
+            pct_slot = RoundedRectangle(width=1.1, height=0.42, stroke_width=0, fill_opacity=0)
+            rows.add(VGroup(label_slot, score_slot, track, pct_slot).arrange(RIGHT, buff=0.3))
+            tracks.append(track)
+            pct_slots.append(pct_slot)
+        rows.arrange(DOWN, buff=0.32, aligned_edge=LEFT).move_to(DOWN * 0.75)
+
+        caption = Text("Logits – eine Punktzahl je Token im Vokabular", font_size=17, color=MUTED)
+        caption.next_to(rows, UP, buff=0.5).align_to(rows, LEFT)
+        self.play(LaggedStart(*[FadeIn(row, shift=RIGHT * 0.2) for row in rows], lag_ratio=0.12), run_time=1.0)
+        self.play(FadeIn(caption), run_time=0.35)
         self.step()
 
-        context = pill("+ Event: Back-off restarting failed container", CYAN, width=8.9)
-        context.move_to(DOWN * 2.5)
-        self.play(FadeIn(context, shift=UP * 0.2), run_time=0.55)
+        temperature = VGroup(
+            Text("Temperatur", font_size=17, color=MUTED),
+            Text("1.0", font_size=26, color=INK),
+        ).arrange(DOWN, buff=0.1)
+        temperature.to_edge(RIGHT, buff=0.8).shift(UP * 1.1)
 
-        new_values = [0.84, 0.08, 0.05, 0.03]
-        bar_anims = []
-        pct_anims = []
-        for row, bar, pct, value, color in zip(rows, bars, percents, new_values, colors):
-            target_bar = bar.copy().stretch_to_fit_width(5.8 * value).align_to(row[1], LEFT)
-            target_pct = Text(f"{value:.0%}", font_size=19, color=color, font="DejaVu Sans Mono").move_to(pct)
-            bar_anims.append(bar.animate.become(target_bar))
-            pct_anims.append(pct.animate.become(target_pct))
-        self.play(*bar_anims, *pct_anims, run_time=1.1, rate_func=smooth)
+        bars = [self.make_bar(track, color, 0.02) for track, color in zip(tracks, colors)]
+        pct_texts = [
+            Text("", font_size=19, color=color, font="DejaVu Sans Mono").move_to(slot)
+            for slot, color in zip(pct_slots, colors)
+        ]
+
+        def distribute(temp: float, run_time: float = 1.0):
+            probabilities = softmax(logits, temp)
+            self.play(
+                *[bar.animate.become(self.make_bar(track, color, p)) for bar, track, color, p in zip(bars, tracks, colors, probabilities)],
+                *[
+                    text.animate.become(
+                        Text(f"{p:.0%}", font_size=19, color=color, font="DejaVu Sans Mono").move_to(slot)
+                    )
+                    for text, slot, color, p in zip(pct_texts, pct_slots, colors, probabilities)
+                ],
+                run_time=run_time,
+                rate_func=smooth,
+            )
+
+        softmax_caption = Text("Softmax macht daraus Wahrscheinlichkeiten", font_size=17, color=MUTED).move_to(caption, LEFT)
+        self.add(*bars, *pct_texts)
+        self.play(FadeIn(temperature), FadeOut(caption), FadeIn(softmax_caption), run_time=0.5)
+        distribute(1.0)
         self.step()
 
-        chosen = Text("gewählt", font_size=18, color=CORAL, weight="BOLD").next_to(rows[0], RIGHT, buff=0.25)
-        marker = Arrow(chosen.get_left(), rows[0].get_right(), buff=0.1, color=CORAL, stroke_width=3)
-        self.play(FadeIn(chosen), GrowArrow(marker), rows[0].animate.scale(1.035), run_time=0.55)
-        note = Text("Mehr Kontext verändert die Verteilung — er garantiert keine Wahrheit.", font_size=21, color=MUTED)
-        note.to_edge(DOWN, buff=0.2)
-        self.play(FadeOut(context), FadeIn(note), run_time=0.5)
+        def set_temperature(temp: float, hint: str | None, color: str):
+            new_value = Text(f"{temp:.1f}", font_size=26, color=color).move_to(temperature[1])
+            note = Text(hint, font_size=18, color=color) if hint else None
+            animations = [temperature[1].animate.become(new_value)]
+            if note:
+                note.next_to(temperature, DOWN, buff=0.25)
+                animations.append(FadeIn(note))
+            self.play(*animations, run_time=0.4)
+            distribute(temp, run_time=0.9)
+            return note
+
+        cold = set_temperature(0.4, "schärfer", CYAN)
+        self.step()
+
+        self.play(FadeOut(cold), run_time=0.25)
+        hot = set_temperature(1.6, "flacher", CORAL)
+        self.step()
+
+        self.play(FadeOut(hot), run_time=0.25)
+        set_temperature(1.0, None, INK)
+        highlight = RoundedRectangle(
+            width=rows[0].width + 0.4,
+            height=0.75,
+            corner_radius=0.14,
+            stroke_color=MINT,
+            stroke_width=2.5,
+            fill_opacity=0,
+        ).move_to(rows[0])
+        picked = Text("gewählt", font_size=17, color=MINT).next_to(highlight, LEFT, buff=0.25)
+        chosen = Text("Baum", font_size=27, color=MINT).move_to(prompt[1], aligned_edge=LEFT)
+        self.play(Create(highlight), FadeIn(picked), run_time=0.5)
+        self.play(FadeOut(prompt[1]), FadeIn(chosen, shift=UP * 0.15), run_time=0.6)
+        note = Text("Das Modell liefert die Verteilung. Die Auswahl daraus ist eine eigene Entscheidung.", font_size=20, color=MUTED)
+        note.to_edge(DOWN, buff=0.25)
+        self.play(FadeIn(note), run_time=0.4)
         self.step()
 
 
