@@ -16,8 +16,8 @@ const deck = new Reveal({
   plugins: [RevealNotes],
 });
 
-// GPT pipeline stations (see the "Leitfaden" slide). Slides with data-step="<key> …"
-// get a small rail at the top that highlights their station(s).
+// Rails at the top of a slide show where we are in a sequence: the GPT pipeline
+// (data-step) during the basics, the exercise steps (data-exercise) in chapter 6.
 const PIPELINE = [
   ["text", "Text"],
   ["token", "Token"],
@@ -30,17 +30,25 @@ const PIPELINE = [
 ];
 const LAYER_STEPS = new Set(["attention", "ffn", "residual"]);
 
-function renderStepRails() {
-  document.querySelectorAll(".slides section[data-step]").forEach((slide) => {
-    const current = slide.dataset.step.split(/\s+/);
-    const first = Math.min(...current.map((key) => PIPELINE.findIndex(([k]) => k === key)));
+const EXERCISE = [
+  ["allein", "Allein"],
+  ["zu-zweit", "Zu zweit"],
+  ["zu-viert", "Zu viert"],
+  ["alle", "Alle"],
+  ["canvas", "Canvas"],
+];
+
+function renderStepRails(attribute, stations, label, marked = new Set()) {
+  document.querySelectorAll(`.slides section[${attribute}]`).forEach((slide) => {
+    const current = slide.getAttribute(attribute).split(/\s+/);
+    const first = Math.min(...current.map((key) => stations.findIndex(([k]) => k === key)));
     const rail = document.createElement("ol");
     rail.className = "step-rail";
-    rail.setAttribute("aria-label", "Station in der GPT-Pipeline");
-    PIPELINE.forEach(([key, label], index) => {
+    rail.setAttribute("aria-label", label);
+    stations.forEach(([key, text], index) => {
       const item = document.createElement("li");
-      item.textContent = label;
-      if (LAYER_STEPS.has(key)) item.classList.add("layer");
+      item.textContent = text;
+      if (marked.has(key)) item.classList.add("layer");
       if (current.includes(key)) item.classList.add("current");
       else if (index < first) item.classList.add("done");
       rail.append(item);
@@ -49,7 +57,8 @@ function renderStepRails() {
   });
 }
 
-renderStepRails();
+renderStepRails("data-step", PIPELINE, "Station in der GPT-Pipeline", LAYER_STEPS);
+renderStepRails("data-exercise", EXERCISE, "Schritt in der Übung");
 
 function updateSection(slide) {
   const label = document.querySelector("#deck-section");
