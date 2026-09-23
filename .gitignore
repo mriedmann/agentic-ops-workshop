@@ -13,3 +13,6 @@ wheels/
 .rendered/
 node_modules/
 .DS_Store
+
+# Pages build output
+_site/
