@@ -307,32 +307,125 @@
 
         <section data-section="Betrieb">
           <div class="eyebrow">WARUM GPU?</div>
-          <h2>Parallelität trifft <span class="accent">Matrixoperationen</span></h2>
-          <div class="gpu-layout">
-            <div class="matrix-grid" aria-label="Matrixmultiplikation">
-              <div class="matrix a">A</div><span>×</span><div class="matrix b">W</div><span>=</span><div class="matrix c">H</div>
+          <h2>Ein Token ist ein Vektor,<br />ein Layer ist eine <span class="accent">Matrix</span></h2>
+          <div class="matrix-math fragment">
+            <div class="mat vec" aria-label="Eingabevektor x">
+              <small>x · Vektor eines Tokens</small>
+              <div class="cells one-row"><span>0,5</span><span>−1,0</span><span>2,0</span></div>
             </div>
-            <div class="metric-stack">
-              <div class="metric fragment"><b>Gewichte</b><span>Parameter × Bytes</span></div>
-              <div class="metric fragment"><b>KV-Cache</b><span>pro Request &amp; Kontext</span></div>
-              <div class="metric fragment"><b>Aktivierungen</b><span>Runtime-Overhead</span></div>
+            <span class="op">×</span>
+            <div class="mat weights" aria-label="Gewichtsmatrix W">
+              <small>W · gelernte Gewichte</small>
+              <div class="cells three-by-two">
+                <span>1,0</span><span>2,0</span>
+                <span>0,0</span><span>−1,0</span>
+                <span>3,0</span><span>1,0</span>
+              </div>
+            </div>
+            <span class="op">=</span>
+            <div class="mat vec out" aria-label="Ergebnisvektor h">
+              <small>h · neuer Vektor</small>
+              <div class="cells one-row"><span>6,5</span><span>4,0</span></div>
             </div>
           </div>
-          <p class="bottom-line fragment">Quantisierung spart Speicher. MoE aktiviert pro Token nur einen Teil der Experten.</p>
+          <p class="calc-line fragment">0,5 · 1,0 &nbsp;+&nbsp; (−1,0) · 0,0 &nbsp;+&nbsp; 2,0 · 3,0 &nbsp;=&nbsp; <b>6,5</b></p>
+          <div class="note-grid">
+            <div class="fragment"><b>Pro Token ein Vektor</b><span>x und h sind Vektoren, W ist eine Matrix aus gelernten Zahlen</span></div>
+            <div class="fragment"><b>Viele Tokens zugleich</b><span>gestapelt werden daraus Matrizen – genau das rechnet eine GPU massiv parallel</span></div>
+          </div>
+          <p class="bottom-line fragment">Ein Modell ist im Kern eine lange Folge solcher Multiplikationen.</p>
+          <aside class="notes">
+            Lernziel: Keine Magie, sondern Lineare Algebra. Echte Modelle nutzen tausende statt drei Zahlen.
+            Korrektur zur früheren Darstellung: x und h sind Vektoren pro Token; erst der Batch macht daraus Matrizen.
+          </aside>
         </section>
 
         <section data-section="Betrieb">
-          <div class="eyebrow">INFERENZ-PFAD</div>
-          <h2>Latenz hat zwei Gesichter</h2>
-          <div class="latency-flow">
-            <div class="latency-block prefill"><small>01</small><b>Prefill</b><span>Prompt parallel verarbeiten</span></div>
-            <div class="latency-arrow">→</div>
-            <div class="latency-block decode"><small>02</small><b>Decode</b><span>Token seriell erzeugen</span></div>
+          <div class="eyebrow">SPEICHER 1 · GEWICHTE</div>
+          <h2>Die Gewichte müssen<br /><span class="accent">in den GPU-Speicher passen</span></h2>
+          <div class="calc">
+            <div class="fragment"><b>FP16</b><span>8 Mrd. Parameter × 2 Byte</span><i>≈ 16 GB</i></div>
+            <div class="fragment"><b>INT8</b><span>8 Mrd. Parameter × 1 Byte</span><i>≈ 8 GB</i></div>
+            <div class="fragment"><b>4-bit</b><span>8 Mrd. Parameter × 0,5 Byte</span><i>≈ 4 GB</i></div>
           </div>
-          <div class="observability fragment">
-            <span>TTFT</span><span>Tokens/s</span><span>Queue Time</span><span>Kontext</span><span>Kosten</span><span>Fehler</span>
+          <div class="note-grid">
+            <div class="fragment"><b>Quantisierung</b><span>weniger Bytes je Parameter – spart Speicher, kostet etwas Genauigkeit</span></div>
+            <div class="fragment"><b>Mixture of Experts</b><span>alle Experten liegen im Speicher, pro Token rechnet nur ein Teil</span></div>
           </div>
-          <p class="fineprint">KV-Caching beschleunigt Decode, verbraucht aber GPU-Speicher mit wachsendem Kontext und Parallelismus.</p>
+          <p class="bottom-line fragment">Die Gewichte belegen den Speicher dauerhaft – unabhängig von der Zahl der Requests.</p>
+          <aside class="notes">
+            Lernziel: Die Modellgröße in GB lässt sich abschätzen. Faustformel: Parameter × Bytes je Parameter.
+            Dazu kommen Aktivierungen und KV-Cache, siehe die nächsten beiden Folien.
+          </aside>
+        </section>
+
+        <section data-section="Betrieb">
+          <div class="eyebrow">SPEICHER 2 · KV-CACHE</div>
+          <h2>Der Cache wächst mit<br />dem <span class="accent">Kontext</span></h2>
+          <div class="note-grid">
+            <div class="fragment"><b>Was liegt drin?</b><span>Pro Token, Layer und Head die Zwischenergebnisse K und V aus der Attention</span></div>
+            <div class="fragment"><b>Wozu?</b><span>Ohne Cache müsste das Modell für jedes neue Token den ganzen bisherigen Text neu durchrechnen</span></div>
+          </div>
+          <div class="calc fragment">
+            <div><b>je Token</b><span>2 (K und V) × 32 Layer × 4096 Werte × 2 Byte</span><i>≈ 0,5 MB</i></div>
+            <div><b>8.000 Tokens</b><span>ein Request mit vollem Kontext</span><i>≈ 4 GB</i></div>
+            <div><b>10 Requests</b><span>parallel, jeder mit eigenem Kontext</span><i>≈ 40 GB</i></div>
+          </div>
+          <p class="bottom-line fragment">Kontextlänge × Parallelität ist die eigentliche Speichergrenze im Betrieb.</p>
+          <aside class="notes">
+            Lernziel: Warum lange Kontexte und viele gleichzeitige Nutzer teuer sind.
+            Beispielzahlen für ein Modell ohne Grouped-Query-Attention; GQA senkt den Cache deutlich.
+          </aside>
+        </section>
+
+        <section data-section="Betrieb">
+          <div class="eyebrow">SPEICHER 3 · AKTIVIERUNGEN</div>
+          <h2>Und dann ist da noch<br />der <span class="accent">Arbeitsspeicher der Rechnung</span></h2>
+          <div class="note-grid wide">
+            <div class="fragment"><b>Was ist das?</b><span>Die Zwischenergebnisse, die während eines Durchlaufs entstehen – Ergebnis jeder Multiplikation, bevor das nächste Layer folgt</span></div>
+            <div class="fragment"><b>Wie lange?</b><span>Nur für die Dauer der Rechnung. Danach wird der Platz wieder frei</span></div>
+            <div class="fragment"><b>Wovon abhängig?</b><span>Von der Batch-Größe: viele Tokens gleichzeitig heißt mehr Zwischenergebnisse gleichzeitig</span></div>
+          </div>
+          <div class="budget fragment">
+            <span>Gewichte<small>konstant</small></span>
+            <span>KV-Cache<small>wächst mit Kontext</small></span>
+            <span>Aktivierungen<small>wächst mit Batch</small></span>
+          </div>
+          <p class="bottom-line fragment">Drei Posten teilen sich den GPU-Speicher – nur einer davon ist konstant.</p>
+          <aside class="notes">
+            Lernziel: Das Speicherbudget einer Inferenz-GPU besteht aus drei Posten.
+            Typischer Betriebsfehler: nur die Modellgröße einplanen und dann bei vielen parallelen Requests OOM laufen.
+          </aside>
+        </section>
+
+        <section data-section="Betrieb">
+          <div class="eyebrow">INFERENZ · ZWEI PHASEN</div>
+          <h2>Erst alles auf einmal,<br />dann <span class="accent">Token für Token</span></h2>
+          <div class="phase-cards">
+            <article class="phase-card fragment">
+              <header><small>01</small><b>Prefill</b></header>
+              <div class="token-strip">
+                <span>Aus</span><span>␣dem</span><span>␣kleinen</span><span>␣Set</span><span>z</span><span>ling</span><span>␣wurde</span><span>␣ein</span><span>␣großer</span>
+              </div>
+              <p>Alle Tokens des Prompts laufen gleichzeitig durch das Modell. Dabei entsteht der KV-Cache.</p>
+              <footer>bestimmt die Zeit bis zum ersten Token · <b>TTFT</b></footer>
+            </article>
+            <article class="phase-card decode fragment">
+              <header><small>02</small><b>Decode</b></header>
+              <div class="token-strip">
+                <span class="done">␣großer</span><span class="new">␣Baum</span><span class="next">?</span><span class="next">?</span>
+              </div>
+              <p>Je Durchlauf entsteht genau ein Token. Der Cache wird gelesen und um das neue Token erweitert.</p>
+              <footer>bestimmt die Ausgabegeschwindigkeit · <b>Tokens/s</b></footer>
+            </article>
+          </div>
+          <div class="observability fragment"><span>TTFT</span><span>Tokens/s</span><span>Queue Time</span><span>Kontextlänge</span><span>Parallele Requests</span></div>
+          <p class="fineprint stacked">Ein langer Prompt kostet Wartezeit am Anfang, eine lange Antwort kostet Zeit pro Token.</p>
+          <p class="bottom-line fragment">Prefill ist rechenlastig, Decode ist speicherlastig – beide Phasen misst man getrennt.</p>
+          <aside class="notes">
+            Lernziel: Die beiden Phasen erklären, warum es zwei getrennte Latenzkennzahlen gibt.
+            Bezug zum KV-Cache: Prefill füllt ihn, Decode liest ihn bei jedem Schritt und hängt an.
+          </aside>
         </section>
 
         <section data-section="Betrieb">
