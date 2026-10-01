@@ -1,4 +1,4 @@
-"""Short, silent Manim scenes used by the RevealJS deck.
+"""Short, silent Manim scenes used by the Slidev deck.
 
 Render all scenes with:
     ./scripts/render-animations.sh

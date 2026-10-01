@@ -8,8 +8,6 @@ Workshop-Unterlagen für erfahrene Linux-/OpenShift-Operator:innen: LLM-Grundlag
 - `style.css`, `layouts/deck.vue`, `global-top.vue`, `components/` — Gestaltung, Folienlayout, Kopf-/Fußzeile, Stationsleiste und Video-Komponente
 - `animations.py` — neun Manim-Szenen für die zentralen Konzepte, mit Klick-Haltepunkten
 - `OUTLINE.manual.md` — handschriftliche Struktur, Grundlage der Folien
-- `OUTLINE.md` — älterer, ausformulierter Entwurf; nicht die Grundlage der aktuellen Folien
-- `llm-explained.py` — ursprünglicher, umfangreicher Manim-Entwurf (nicht von der Präsentation verwendet)
 
 ## Konventionen im Deck
 
