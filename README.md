@@ -6,7 +6,8 @@ Das Deck ist eine [Slidev](https://sli.dev)-Präsentation mit Speaker Notes. Die
 
 ## Inhalt
 
-- `slides.md` — die Folien samt Speaker Notes
+- `slides.md` — die Folien samt Speaker Notes, in einer kompakten Markdown-Schreibweise
+- `setup/` — übersetzt diese Schreibweise in das HTML der Folien
 - `style.css`, `layouts/`, `components/`, `global-top.vue` — Gestaltung und Bausteine des Decks
 - `animations.py` — die Manim-Szenen
 - `public/media/` — die gerenderten Videos

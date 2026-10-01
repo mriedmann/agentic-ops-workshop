@@ -65,7 +65,7 @@ and show it in the eyebrow (for example `BEGRIFFE · 8 MIN`).
 - A slide must be understandable later without the spoken track. The question "what is
   this slide trying to teach me?" needs one clear answer.
 - Every content slide ends with a key message: one sentence at the bottom that states the
-  takeaway (`bottom-line` or `callout`).
+  takeaway (`> …` in the slide syntax).
 - One central statement per slide. If the information on a slide is uneven or points in
   several directions, split it or cut it.
 - A slide that adds no value is removed, not polished.
@@ -159,12 +159,15 @@ Every content slide has notes with:
 
 | Path | Purpose |
 |---|---|
-| `slides.md` | All slides, speaker notes included |
+| `slides.md` | All slides in the compact slide syntax, speaker notes included |
+| `setup/expand.mjs` | The slide syntax: turns a slide into HTML and numbers the clicks |
+| `setup/transformers.ts` | Hooks `expand.mjs` into Slidev |
 | `style.css` | The whole visual design |
 | `layouts/deck.vue` | Slide frame, renders the step rail |
 | `global-top.vue` | Footer: brand, chapter label, slide number, progress line |
 | `components/StepRail.vue` | Step rails and their stations |
 | `components/StepVideo.vue` | Click-stepped video |
+| `components/*.vue` (others) | One-off diagrams used by a single slide |
 | `animations.py` | Manim scenes, one class per animation |
 | `public/media/` | Rendered videos and their `*.steps.json` |
 | `scripts/check-slides.mjs` | Convention checks, run in CI |
@@ -183,12 +186,14 @@ npm run export                  # PDF, one page per click
 ./scripts/render-animations.sh  # after changing animations.py
 ```
 
-`npm run check` enforces the conventions below. It warns when:
+`npm run check` expands every slide with `setup/expand.mjs` and enforces the conventions
+below. It warns when:
 
+- a slide uses the syntax wrongly (unknown block, key message not last, …),
 - a referenced video or its `*.steps.json` is missing,
-- the video steps used on a slide do not match the stops of its video,
-- a `data-video-step` sits on an element without `v-click`, or a slide uses a bare
-  `<video>` instead of `StepVideo`,
+- the bullets and `[video]` steps of a slide do not match the stops of its video,
+- a component is missing, its `clicks="N"` does not match the clicks it uses, or it is
+  visible on a content slide before the first click,
 - a content slide shows anything besides eyebrow, title and fineprint before the first click,
 - a content slide has no key message.
 
@@ -209,21 +214,30 @@ Extend the check when you add a convention that can be verified mechanically.
 
 ## 5. Writing slides
 
-Slides are raw HTML inside `slides.md`, separated by `---` with a frontmatter block.
+Slides are written in a compact Markdown syntax in `slides.md`, separated by `---` with a
+frontmatter block. `setup/expand.mjs` turns each slide into the HTML that `style.css`
+styles and numbers the clicks in reading order. Never write click numbers by hand.
 
 ```md
 ---
-section: LLM
-step: embedding
+section: Betrieb
+eyebrow: SPEICHER 2 · KV-CACHE
 ---
 
-<div class="eyebrow">SCHRITT 2 · EMBEDDING</div>
-<h2>Jedes Token wird zu einer<br /><span class="accent">Liste von Zahlen</span></h2>
-<div class="note-grid">
-  <div v-click="1"><b>Was</b><span>…</span></div>
-  <div v-click="2"><b>Warum</b><span>…</span></div>
-</div>
-<p class="bottom-line" v-click="3">Erst als Zahlen wird Bedeutung für das Modell rechenbar.</p>
+## Der Cache wächst mit
+## dem *Kontext*
+
+::: notes
+- **Was liegt drin?** Pro Token, Layer und Head die Zwischenergebnisse K und V
+- **Wozu?** Ohne Cache müsste das Modell den ganzen Text neu durchrechnen
+:::
+
+::: calc once
+- **je Token** 2 (K und V) × 32 Layer × 4096 Werte × 2 Byte *≈ 0,5 MB*
+- **8.000 Tokens** ein Request mit vollem Kontext *≈ 4 GB*
+:::
+
+> Kontextlänge × Parallelität ist die eigentliche Speichergrenze im Betrieb.
 
 <!--
 Lernziel: …
@@ -232,39 +246,123 @@ Hinweis für die Moderation …
 -->
 ```
 
+### Frontmatter
+
+| Key | Effect |
+|---|---|
+| `section` | Chapter label in the footer |
+| `eyebrow` | Small label above the title (category, time) |
+| `chapter` | Makes the slide a chapter slide and shows this number (`chapter: 3` → "03") |
+| `class` | Slide type: `hero` (cover, exit ticket), `break-slide` (break, demo placeholder), `quiz-slide`, `closing`; on video slides `reverse` puts the video left |
+| `step` / `exercise` | Shows the step rail with these stations highlighted |
+| `video`, `videoLabel` | Makes the slide a video slide (see Animations); the label is the fallback text when the file is missing |
+| `bg` | Overrides the background colour |
+
+Quote a value that contains `: ` or starts with a special character. Prose belongs in
+the body, not in the frontmatter, so this rarely matters.
+
+### Body
+
+| Write | Result | Click |
+|---|---|---|
+| `## Title` | Title. Consecutive `##` lines are one title with a line break. `#` on the cover. | – |
+| `- item` | Bullet list | one per item |
+| `1. item` | Numbered steps (01, 02, …). `1. **5 MIN** text` shows the bold part instead of the number. | one per item |
+| `::: kind` … `:::` | A block, see below | per kind |
+| `> text` | Key message. Add ` {.callout}` for the centred box. Must be the last click. | last |
+| `text {.fineprint}` | Small static note above the key message | – |
+| `text {.class}` | Paragraph with that class | one |
+| `[video]` | A click that only advances the video | one |
+| `<Component v-click />` | A component that appears as a whole | one |
+| `<Component clicks="2" />` | A component with its own clicks | as stated |
+
+Inline markup: `*text*` is the accent colour, `**text**` the title part of an item,
+`` `text` `` code. On hero and break slides plain paragraphs are static (lede, prompt);
+chapter slides contain only the title.
+
+Raw HTML still works for something no block covers: start the line with `<`, keep the
+block free of blank lines, and write a bare `v-click` on every element that should
+appear on a click. The numbers are filled in for you.
+
+### Blocks
+
+Every block takes a Markdown list, one item per line. Items appear one per click; add
+`once` after the kind to show the whole block on one click. Further words after the kind
+are added as CSS classes (`::: notes wide`, `::: cards two-by-two`).
+
+| Kind | Item format | Notes |
+|---|---|---|
+| `cards` | `1. text` | Numbered cards |
+| `timeline` | `1. label *duration*` | Agenda |
+| `notes` | `- **Title** text` | Boxes with title and text |
+| `quiz-cards` | `- **Question** answer` | Question on one click, answer on the next |
+| `calc` | `- **Label** text *result*` | Calculation rows |
+| `definitions` | ``- **Term** text `code` `` | Term, description, example |
+| `failures` | `1. **Title** text *remedy*` | Numbered failure cards |
+| `controls` | `1. **Title** text` | Numbered columns |
+| `takeaways` | `1. text` | Numbered statements |
+| `truths` | `- **Lead-in** rest of sentence` | Two contrasting statements |
+| `scale` | `- LABEL **statement** *note*` | Steps on a scale, joined by a line |
+| `statement` | `- sentence` | First item small, second large |
+| `roadmap` | ``1. **Station** text `example` `` | ` {.layer}` marks a row; one extra line is the caption |
+| `flow` | `- Node *detail*` | Always `once`; nodes joined by arrows, last one highlighted |
+| `trace` | `- LABEL **text**` | Always `once`; boxes joined by arrows |
+| `chips`, `observability` | `- text` | Always `once`; pills |
+| `canvas` | `1. **Title** text` | Always `once`; numbered grid |
+| `example` | ``- LABEL `code` `` | Always `once`; labelled code line |
+| `sentence` | one line, `**gaps**` in bold | Always `once`; sentence template |
+| `quiz` | `- A text`, then `Lösung: B — text` | Options together, then label, then answer |
+
 Rules:
 
-- **Frontmatter:** `section` sets the chapter label in the footer. `class` selects a slide
-  type. `step` or `exercise` shows the step rail. `bg` overrides the background colour.
-- **Anatomy:** eyebrow (category, time), title in `h2` with one `accent` span, content,
-  key message (`class="bottom-line"`, or `callout` for a centred box). Chapter, hero,
-  break, closing and quiz slides are exempt from the key message.
-- **Clicks:** everything except eyebrow, title and fineprint carries `v-click="N"`.
-  Number the clicks explicitly in reading order; nested clicks otherwise count in the
-  wrong order. Inserting a click means renumbering the ones after it on that slide.
-- **HTML blocks:** no blank lines inside a slide's HTML, and start the slide with a block
-  element. A blank line ends the HTML block and the rest is parsed as Markdown.
+- **Slides start empty by construction:** everything in the body except the title and
+  fineprint appears on a click.
+- **Reuse a block kind** before inventing a new one. A new kind is one entry in `KINDS`
+  in `setup/expand.mjs` plus its CSS; add a row to the table above.
+- **One-off diagrams** (a figure used on one slide) are Vue components in `components/`.
+  A component that appears as a whole takes `v-click` in the slide. A component with
+  several clicks takes the prop `at` and uses `v-click="at"`, `v-click="at + 1"`, …; the
+  slide states the count with `clicks="N"`.
 - **Notes:** an HTML comment at the end of the slide. Separate paragraphs with blank lines.
-- **Slide types (`class`):** `hero` (cover, exit ticket), `chapter`, `break-slide` (break,
-  demo placeholder), `video-slide` (add `reverse` to put the video left), `quiz-slide`,
-  `closing`.
-- **Reuse existing components** before inventing new ones: `question-grid`, `timeline`,
-  `compare`, `note-grid`, `calc`, `definition-list`, `rag-flow`, `failure-grid`,
-  `phase-cards`, `demo-steps`, `chips`, `canvas-grid`, `takeaways`. Look at a slide that
-  uses the component and copy its structure.
 - **New workshop:** adjust the brand text in `global-top.vue` and the stations in
   `components/StepRail.vue`; a `step`/`exercise` value must match a station key there.
+- **Changing the syntax:** `expand.mjs` is the only place that produces slide HTML. After
+  touching it, take screenshots of one slide per affected block kind before and after
+  the change and confirm they are identical.
 
 ## 6. Animations
 
 - One `SteppedScene` subclass per animation in `animations.py`, with a `slug`. Call
   `self.step()` at the end of each main step; the timestamps are written to
   `public/media/<slug>.steps.json`.
-- In the slide: `<StepVideo src="media/<slug>.mp4" steps="media/<slug>.steps.json">Fallback
-  text</StepVideo>`. An element with `v-click` and `data-video-step="N"` plays the video
-  up to stop N. Steps without a bullet use
-  `<span class="video-step" v-click="K" data-video-step="N"></span>`.
-- The number of stops and the video steps on the slide must match; the check enforces this.
+- In the slide: `video: <slug>` and `videoLabel: …` in the frontmatter. Every bullet and
+  every `[video]` line is one video step, in order: the first plays the video to stop 1,
+  the second to stop 2, and so on. Put `[video]` before or after the bullets for steps
+  that have no bullet. The key message does not move the video.
+
+  ```md
+  ---
+  eyebrow: SCHRITT 1 · TOKEN
+  video: token-pipeline
+  videoLabel: Manim · Token-Pipeline
+  ---
+
+  ## Text wird in Tokens
+  ## *zerlegt und nummeriert*
+
+  [video]
+
+  - Tokens sind Textstücke, keine Wörter
+  - Jedes Token hat eine feste ID im Vokabular
+  - „Setzling“ allein wird zu drei Tokens
+
+  > Das Modell sieht keine Buchstaben, sondern nur eine Folge von Token-IDs.
+
+  Tokenisierung ist kein Stemming. {.fineprint}
+  ```
+
+- The number of stops must equal the number of bullets plus `[video]` lines; the check
+  enforces this.
 - Use the colour constants and the running-example constants at the top of `animations.py`.
   Scenes render at 1280×720 on the deck background, so they blend into the slide.
 - While working on one scene, render it alone in low quality:
@@ -273,8 +371,6 @@ Rules:
   `public/media/`.
 - Videos are committed. Rendering does not run in CI: render locally and commit the files
   from `public/media/`.
-- The text inside `<StepVideo>` is the fallback shown when the video file is missing.
-  Make it name the animation.
 
 ## 7. Export and publishing
 
