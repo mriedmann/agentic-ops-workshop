@@ -37,6 +37,7 @@ jobs:
       - name: Build site
         run: |
           set -euo pipefail
+          # GitHub Pages serves the site under /<repository>/, so that is the base path.
           npx slidev build --base "/${{ github.event.repository.name }}/" --out _site
           cp LICENSE _site/LICENSE
 

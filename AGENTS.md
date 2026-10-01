@@ -173,13 +173,39 @@ Every content slide has notes with:
 Commands:
 
 ```bash
-npm install && uv sync          # once
+npm install                     # once; Node 22.12 or newer
+uv sync                         # once, only needed to render animations
 npm start                       # dev server on http://localhost:3030
-npm run check:strict            # conventions; must pass before committing
+npm run check                   # conventions, prints warnings
+npm run check:strict            # same, fails on any warning; runs in CI
 npm run build                   # static site
-npm run export                  # PDF, one page per click (needs Google Chrome)
+npm run export                  # PDF, one page per click
 ./scripts/render-animations.sh  # after changing animations.py
 ```
+
+`npm run check` enforces the conventions below. It warns when:
+
+- a referenced video or its `*.steps.json` is missing,
+- the video steps used on a slide do not match the stops of its video,
+- a `data-video-step` sits on an element without `v-click`, or a slide uses a bare
+  `<video>` instead of `StepVideo`,
+- a content slide shows anything besides eyebrow, title and fineprint before the first click,
+- a content slide has no key message.
+
+Extend the check when you add a convention that can be verified mechanically.
+
+### Where information lives
+
+- `README.md` is for people: what the project is and how to run it locally. Keep it free
+  of authoring rules. Update it when prerequisites or commands change.
+- `AGENTS.md` (this file) holds everything about how to build and change a deck.
+- Project specifics stay next to what they describe, not in either document:
+  - reasons for a setting: a comment at the setting (`slides.md` headmatter,
+    `.github/workflows/pages.yml`, `uno.config.ts`),
+  - the running example: the `EXAMPLE_*` constants in `animations.py`,
+  - rail stations and brand text: `components/StepRail.vue`, `global-top.vue`,
+  - anything the presenter must prepare or remember: the speaker notes of the slide
+    where it matters (for example the demo checklist on the demo slide).
 
 ## 5. Writing slides
 
@@ -211,7 +237,8 @@ Rules:
 - **Frontmatter:** `section` sets the chapter label in the footer. `class` selects a slide
   type. `step` or `exercise` shows the step rail. `bg` overrides the background colour.
 - **Anatomy:** eyebrow (category, time), title in `h2` with one `accent` span, content,
-  key message. Chapter, hero, break, closing and quiz slides are exempt from the key message.
+  key message (`class="bottom-line"`, or `callout` for a centred box). Chapter, hero,
+  break, closing and quiz slides are exempt from the key message.
 - **Clicks:** everything except eyebrow, title and fineprint carries `v-click="N"`.
   Number the clicks explicitly in reading order; nested clicks otherwise count in the
   wrong order. Inserting a click means renumbering the ones after it on that slide.
@@ -240,10 +267,27 @@ Rules:
 - The number of stops and the video steps on the slide must match; the check enforces this.
 - Use the colour constants and the running-example constants at the top of `animations.py`.
   Scenes render at 1280×720 on the deck background, so they blend into the slide.
+- While working on one scene, render it alone in low quality:
+  `uv run manim -ql --format=mp4 animations.py <SceneClass>`. Use
+  `./scripts/render-animations.sh` for the final files; only that script copies them to
+  `public/media/`.
 - Videos are committed. Rendering does not run in CI: render locally and commit the files
   from `public/media/`.
+- The text inside `<StepVideo>` is the fallback shown when the video file is missing.
+  Make it name the animation.
 
-## 7. Design
+## 7. Export and publishing
+
+- **PDF export** runs through Google Chrome (`--executable-path`, overridable with
+  `CHROME_PATH`). The Chromium bundled with Playwright cannot play H.264, so the video
+  frames would be blank.
+- **GitHub Pages:** `.github/workflows/pages.yml` runs the strict check on every push and
+  pull request and deploys `main`. The site is built with the repository name as base
+  path, and slide URLs use hash routing (`#/12`) so direct links work there. Reference
+  assets relative to the base (`media/…`, not `/media/…`).
+- A change is not done until the strict check passes and `npm run build` succeeds.
+
+## 8. Design
 
 - Canvas 1280×720, dark theme. Use the colour tokens in `:root` of `style.css` only:
   cyan for emphasis, amber/mint/coral for categories and states, muted for secondary text.
@@ -254,8 +298,10 @@ Rules:
 - Class names that are also UnoCSS utilities pick up unwanted styles (`ring` and `ml` did).
   Either avoid such names or add them to the blocklist in `uno.config.ts`.
 - Do not add decoration that carries no information.
+- The deck must work without an internet connection: no web fonts, no images, scripts
+  or styles loaded from external hosts.
 
-## 8. Working method
+## 9. Working method
 
 1. Outline first, confirmed by the user.
 2. Build the slides, then the animations.
@@ -268,7 +314,7 @@ Rules:
    bullets say.
 6. Expect review feedback per slide number. Fix the named slide, then check whether the
    same problem exists on other slides and fix it there too.
-7. Keep `README.md` in step with any change to conventions or commands.
+7. Put new information where it belongs (see "Where information lives").
 
 Review checklist for every slide:
 
