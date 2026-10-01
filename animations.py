@@ -4,7 +4,7 @@ Render all scenes with:
     ./scripts/render-animations.sh
 
 Each scene marks its main steps with ``self.step()``. The step timestamps are
-written to ``media/<slug>.steps.json``; the deck plays the video from stop to
+written to ``public/media/<slug>.steps.json``; the deck plays the video from stop to
 stop on each click instead of running it as a loop.
 """
 
@@ -72,7 +72,7 @@ CORAL = "#ff6b6b"
 PANEL = "#0d2035"
 EDGE = "#21405d"
 
-MEDIA_DIR = Path(__file__).parent / "media"
+MEDIA_DIR = Path(__file__).parent / "public" / "media"
 
 
 # Running example used by all LLM basics slides (token → … → next token).

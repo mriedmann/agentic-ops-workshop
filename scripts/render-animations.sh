@@ -3,7 +3,7 @@ set -euo pipefail
 
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 render_dir="$project_dir/.rendered"
-target_dir="$project_dir/media"
+target_dir="$project_dir/public/media"
 
 mkdir -p "$render_dir" "$target_dir"
 cd "$project_dir"
@@ -22,5 +22,5 @@ cp "$source_dir/GpuMemory.mp4" "$target_dir/gpu-memory.mp4"
 cp "$source_dir/AgentLoop.mp4" "$target_dir/agent-loop.mp4"
 cp "$source_dir/TrustBoundary.mp4" "$target_dir/trust-boundary.mp4"
 
-# Step timestamps (media/*.steps.json) are written by animations.py itself.
+# Step timestamps (public/media/*.steps.json) are written by animations.py itself.
 echo "Rendered videos are available in $target_dir"

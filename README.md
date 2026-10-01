@@ -4,7 +4,8 @@ Workshop-Unterlagen für erfahrene Linux-/OpenShift-Operator:innen: LLM-Grundlag
 
 ## Inhalt
 
-- `index.html` — RevealJS-Präsentation mit Speaker Notes
+- `slides.md` — Slidev-Präsentation mit Speaker Notes (HTML-Folien, Kommentare am Folienende sind Notizen)
+- `style.css`, `layouts/deck.vue`, `global-top.vue`, `components/` — Gestaltung, Folienlayout, Kopf-/Fußzeile, Stationsleiste und Video-Komponente
 - `animations.py` — neun Manim-Szenen für die zentralen Konzepte, mit Klick-Haltepunkten
 - `OUTLINE.manual.md` — handschriftliche Struktur, Grundlage der Folien
 - `OUTLINE.md` — älterer, ausformulierter Entwurf; nicht die Grundlage der aktuellen Folien
@@ -12,9 +13,10 @@ Workshop-Unterlagen für erfahrene Linux-/OpenShift-Operator:innen: LLM-Grundlag
 
 ## Konventionen im Deck
 
-- Jede Inhaltsfolie startet leer: sichtbar sind nur Eyebrow und Titel, alles andere ist ein Fragment.
+- Jede Inhaltsfolie startet leer: sichtbar sind nur Eyebrow und Titel, alles andere erscheint per `v-click="N"`. Die Klicknummern sind explizit, weil verschachtelte `v-click` sonst in falscher Reihenfolge zählen.
 - Jede Inhaltsfolie endet mit einer Kernaussage (`class="bottom-line"`), damit sie auch ohne Vortrag trägt.
-- Die Grundlagen-Folien tragen `data-step` und zeigen oben rechts ihre Station in der GPT-Pipeline.
+- Die Grundlagen-Folien tragen im Frontmatter `step:` (die Übungsfolien `exercise:`) und zeigen oben rechts ihre Station.
+- `section:` im Frontmatter steuert die Kapitelanzeige unten rechts, `bg:` eine abweichende Hintergrundfarbe.
 - Durchgängiges Beispiel: „Aus dem kleinen Setzling wurde ein großer …“ → „Baum“ (Konstanten in `animations.py`).
 
 ## Einmalig einrichten
@@ -24,7 +26,7 @@ npm install
 uv sync
 ```
 
-RevealJS wird lokal installiert; die Präsentation benötigt während des Workshops keine Internetverbindung.
+Slidev wird lokal installiert; die Präsentation benötigt während des Workshops keine Internetverbindung.
 
 ## Animationen rendern
 
@@ -32,9 +34,9 @@ RevealJS wird lokal installiert; die Präsentation benötigt während des Worksh
 ./scripts/render-animations.sh
 ```
 
-Die MP4-Dateien landen in `media/`, zusammen mit je einer `*.steps.json` mit den Haltepunkten.
+Die MP4-Dateien landen in `public/media/`, zusammen mit je einer `*.steps.json` mit den Haltepunkten.
 
-Die Videos laufen nicht automatisch, sondern werden per Klick weitergeschaltet. In `animations.py` beendet `self.step()` einen Hauptschritt einer Szene. In `index.html` spielt ein Fragment mit `data-video-step="N"` das Video bis Haltepunkt N; unsichtbare Schritte sind `<span class="fragment video-step" data-video-step="N"></span>`. `npm run check` meldet, wenn Fragmente und Haltepunkte nicht zusammenpassen. Ohne gerenderte Videos zeigt die Präsentation an deren Stelle einen beschrifteten Fallback. Manim benötigt unter Linux unter anderem FFmpeg, Cairo und Pango; abhängig von der Distribution können zusätzliche Systempakete nötig sein.
+Die Videos laufen nicht automatisch, sondern werden per Klick weitergeschaltet. In `animations.py` beendet `self.step()` einen Hauptschritt einer Szene. In `slides.md` steht das Video als `<StepVideo src="media/x.mp4" steps="media/x.steps.json">Fallback</StepVideo>`; ein Element mit `v-click` und `data-video-step="N"` spielt es bis Haltepunkt N. Unsichtbare Schritte sind `<span class="video-step" v-click="K" data-video-step="N"></span>`. `npm run check` meldet, wenn Klicks und Haltepunkte nicht zusammenpassen. Ohne gerenderte Videos zeigt die Präsentation an deren Stelle einen beschrifteten Fallback. Manim benötigt unter Linux unter anderem FFmpeg, Cairo und Pango; abhängig von der Distribution können zusätzliche Systempakete nötig sein.
 
 Für einen schnellen Einzeltest:
 
@@ -48,13 +50,14 @@ uv run manim -ql --format=mp4 animations.py AgentLoop
 npm start
 ```
 
-Anschließend `http://localhost:8000` öffnen.
+Anschließend `http://localhost:3030` öffnen.
 
 - Navigation: Pfeiltasten oder Leertaste
-- Speaker View: `S`
-- Übersicht: `Esc`
-- Vollbild: `F`
-- PDF-Export: `http://localhost:8000/?print-pdf` öffnen und über den Browser als PDF drucken
+- Presenter-Ansicht mit Notizen: `http://localhost:3030/presenter/`
+- Übersicht: `o`
+- Vollbild: `f`
+- PDF-Export: `npm run export` (schreibt `slides-export.pdf`, ein Klickzustand pro Seite). Der Export nutzt Google Chrome statt des
+  Playwright-Chromiums, weil dieses kein H.264 abspielt und die Videobilder sonst leer blieben; anderer Pfad über `CHROME_PATH=…`.
 
 ## Prüfen
 
@@ -68,21 +71,19 @@ Der Check zählt die Slides und meldet noch nicht gerenderte Videos. Geprüft we
 ## Veröffentlichung über GitHub Pages
 
 `.github/workflows/pages.yml` prüft bei jedem Push und Pull Request die Folien und veröffentlicht
-den Stand von `main` auf GitHub Pages. Der Build installiert reveal.js über `npm ci` und kopiert
-nur die tatsächlich benötigten Dateien in das Verzeichnis `_site`: `index.html`, `styles.css`,
-`presentation.js`, `media/` sowie `dist/` und `plugin/` von reveal.js samt dessen Lizenz.
+den Stand von `main` auf GitHub Pages. Der Build läuft über `slidev build` mit dem Repository-Namen als
+Basis-Pfad nach `_site`. Folien-URLs nutzen Hash-Routing (`#/12`), damit Direktlinks auf GitHub Pages funktionieren.
 
 Einmalig im Repository einstellen: **Settings → Pages → Source: GitHub Actions**. Danach
 erscheint die Präsentation unter `https://<benutzer>.github.io/<repository>/`.
 
 Die Videos liegen im Repository, das Rendern mit Manim läuft bewusst nicht in der Pipeline.
 Nach Änderungen an `animations.py` also lokal `./scripts/render-animations.sh` ausführen und die
-neuen Dateien aus `media/` mit committen.
+neuen Dateien aus `public/media/` mit committen.
 
 ## Lizenz
 
-Siehe `LICENSE`. reveal.js wird über npm eingebunden und behält seine eigene MIT-Lizenz, die bei
-der Veröffentlichung mit ausgeliefert wird.
+Siehe `LICENSE`. Slidev wird über npm eingebunden und behält seine eigene MIT-Lizenz.
 
 ## Demo vor Ort
 
