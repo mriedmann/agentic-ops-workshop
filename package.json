@@ -5,11 +5,16 @@
   "license": "SEE LICENSE IN LICENSE",
   "description": "Workshop slides: LLMs and Agentic Operations",
   "scripts": {
-    "start": "python3 -m http.server 8000",
+    "dev": "slidev --open false",
+    "start": "slidev --open false",
+    "build": "slidev build",
+    "export": "slidev export --with-clicks --executable-path \"${CHROME_PATH:-google-chrome}\"",
     "check": "node scripts/check-slides.mjs",
     "check:strict": "node scripts/check-slides.mjs --strict"
   },
-  "dependencies": {
-    "reveal.js": "^5.2.1"
+  "devDependencies": {
+    "@slidev/cli": "^53.0.0",
+    "@slidev/parser": "^53.0.0",
+    "playwright-chromium": "^1.63.0"
   }
 }

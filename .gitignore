@@ -16,3 +16,7 @@ node_modules/
 
 # Pages build output
 _site/
+
+# Slidev export output
+slides-export.pdf
+slides-export/

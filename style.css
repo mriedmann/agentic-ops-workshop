@@ -11,74 +11,83 @@
   --coral: #ff6b6b;
   --violet: #ac8bff;
   --shadow: 0 20px 60px rgb(0 0 0 / 24%);
+  /* Bottom zone: the footer chrome sits at --chrome-bottom; the key message of a slide
+     (bottom-line, callout) rests at --key-bottom, leaving a clear gap above the footer. */
+  --chrome-bottom: 14px;
+  --key-bottom: 46px;
+  --deck-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-
-* { box-sizing: border-box; }
 
 html,
 body,
-.reveal-viewport,
-.reveal,
-.reveal .backgrounds {
-  background: var(--bg);
+#app,
+#page-root,
+.slidev-slide-container {
+  background: var(--bg) !important;
   color: var(--ink);
 }
 
-.reveal {
+/* Same reset the reveal.js deck used (Meyer reset), scoped to the slides at element specificity (class rules still win) */
+:where(.deck, .deck-chrome) :is(div, span, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, code, em, img, small, strong, sub, sup, b, u, i, dl, dt, dd, ol, ul, li, article, aside, footer, header, section, video) {
+  border: 0;
+  font: inherit;
+  font-size: 100%;
+  margin: 0;
+  padding: 0;
+  vertical-align: baseline;
+}
+:where(.deck) :is(ol, ul) { list-style: none; }
+
+.deck *,
+.deck *::before,
+.deck *::after { box-sizing: border-box; }
+
+.deck {
   color: var(--ink);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--deck-font);
   font-size: 30px;
-}
-
-.reveal::before {
-  background-image:
-    linear-gradient(rgb(77 227 255 / 2%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(77 227 255 / 2%) 1px, transparent 1px);
-  background-size: 52px 52px;
-  content: "";
-  inset: 0;
-  pointer-events: none;
-  position: fixed;
-  z-index: 0;
-}
-
-.reveal .slides { text-align: left; }
-
-.reveal .slides section {
   height: 100%;
+  background: var(--bg);
+  line-height: 1;
   padding: 70px 76px 58px;
+  position: relative;
+  text-align: left;
 }
 
-.reveal h1,
-.reveal h2,
-.reveal h3,
-.reveal p { margin: 0; }
+.deck h1,
+.deck h2,
+.deck h3,
+.deck p { margin: 0; }
 
-.reveal h1,
-.reveal h2,
-.reveal h3 {
+.deck h1,
+.deck h2,
+.deck h3 {
   color: var(--ink);
   font-family: inherit;
   letter-spacing: -0.045em;
   text-transform: none;
 }
 
-.reveal h1 {
+.deck h1 {
   font-size: 2.6em;
   font-weight: 760;
   line-height: 0.93;
 }
 
-.reveal h2 {
+.deck h2 {
   font-size: 1.65em;
   font-weight: 720;
   line-height: 1.02;
   margin-bottom: 34px;
 }
 
-.reveal h3 { font-size: 0.76em; }
-.reveal p, .reveal li { line-height: 1.35; }
-.reveal code { color: var(--cyan); font-family: "DejaVu Sans Mono", ui-monospace, monospace; }
+.deck h3 { font-size: 0.76em; }
+.deck p, .deck li { line-height: 1.35; }
+.deck code { color: var(--cyan); font-family: "DejaVu Sans Mono", ui-monospace, monospace; }
+
+/* Clicks fade like reveal.js fragments did */
+.deck .slidev-vclick-target { transition: opacity 0.2s ease, visibility 0.2s ease; }
+.deck .slidev-vclick-hidden { visibility: hidden; }
 
 .accent { color: var(--cyan); }
 .eyebrow {
@@ -89,11 +98,11 @@ body,
   margin-bottom: 20px;
 }
 .lede { color: var(--muted); font-size: 0.82em; margin-top: 26px !important; }
-.fineprint.stacked { bottom: 92px; }
-.fineprint { bottom: 24px; color: var(--muted); font-size: 0.48em; left: 76px; position: absolute; }
+.fineprint.stacked { bottom: calc(var(--key-bottom) + 57px); }
+.fineprint { bottom: var(--key-bottom); color: var(--muted); font-size: 0.48em; left: 76px; position: absolute; }
 .bottom-line {
   border-left: 3px solid var(--cyan);
-  bottom: 35px;
+  bottom: var(--key-bottom);
   color: var(--muted);
   font-size: 0.58em;
   left: 76px;
@@ -101,27 +110,30 @@ body,
   position: absolute;
 }
 
+/* Deck chrome (global-top.vue) */
 .deck-chrome {
-  bottom: 20px;
+  bottom: var(--chrome-bottom);
   color: var(--muted);
   display: flex;
+  font-family: var(--deck-font);
   font-size: 11px;
   font-weight: 700;
   justify-content: space-between;
   left: 26px;
   letter-spacing: 0.14em;
   pointer-events: none;
-  position: fixed;
+  position: absolute;
   right: 68px;
   z-index: 30;
 }
 .deck-section { color: var(--cyan); }
-.reveal .progress { color: var(--cyan); height: 3px; }
-.reveal .controls { color: var(--cyan); transform: scale(0.72); }
-.reveal .slide-number { background: transparent; color: var(--muted); font-size: 11px; right: 25px; }
+.deck-progress { bottom: 0; height: 3px; left: 0; pointer-events: none; position: absolute; right: 0; z-index: 30; }
+.deck-progress span { background: var(--cyan); display: block; height: 100%; transform-origin: left; transition: transform 0.8s cubic-bezier(0.26, 0.86, 0.44, 0.985); }
+.deck-number { bottom: calc(var(--chrome-bottom) - 2px); color: var(--muted); font-family: var(--deck-font); font-size: 11px; pointer-events: none; position: absolute; right: 25px; z-index: 30; }
+
 
 /* Cover */
-.hero { display: flex !important; flex-direction: column; justify-content: center; }
+.hero { display: flex; flex-direction: column; justify-content: center; }
 .hero::after {
   background: radial-gradient(circle, rgb(77 227 255 / 16%) 0, transparent 68%);
   border: 1px solid rgb(77 227 255 / 12%);
@@ -175,7 +187,7 @@ body,
 .timeline-item small { color: var(--muted); font-size: 0.42em; margin-top: auto; }
 
 /* Chapter */
-.chapter { align-items: center; display: flex !important; gap: 70px; }
+.chapter { align-items: center; display: flex; gap: 70px; }
 .chapter-number { color: rgb(77 227 255 / 11%); font-size: 8em; font-weight: 800; letter-spacing: -0.12em; line-height: 1; }
 .chapter h2 { font-size: 2.2em; margin: 0; }
 
@@ -192,7 +204,7 @@ body,
 .product-card small { color: var(--coral); font-size: 0.4em; font-weight: 800; letter-spacing: 0.16em; }
 .product-card strong { font-size: 0.8em; margin: 18px 0; }
 .product-card span { color: var(--muted); font-size: 0.48em; line-height: 1.5; }
-.callout { background: rgb(77 227 255 / 7%); border: 1px solid rgb(77 227 255 / 25%); border-radius: 9px; bottom: 38px; color: var(--ink); font-size: 0.55em; left: 50%; padding: 12px 22px; position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.callout { background: rgb(77 227 255 / 7%); border: 1px solid rgb(77 227 255 / 25%); border-radius: 9px; bottom: calc(var(--key-bottom) + 3px); color: var(--ink); font-size: 0.55em; left: 50%; padding: 12px 22px; position: absolute; transform: translateX(-50%); white-space: nowrap; }
 
 /* Main model */
 .big-statement { align-items: flex-start; display: flex; flex-direction: column; margin: 110px auto 0; width: 82%; }
@@ -201,7 +213,7 @@ body,
 .warning-line { color: var(--coral); font-size: 0.54em; margin: 45px auto 0 !important; width: 82%; }
 
 /* Video layouts */
-.video-slide { align-items: center; display: grid !important; gap: 44px; grid-template-columns: 0.7fr 1.3fr; }
+.video-slide { align-items: center; display: grid; gap: 44px; grid-template-columns: 0.7fr 1.3fr; }
 .video-slide.reverse { grid-template-columns: 1.3fr 0.7fr; }
 .video-slide.reverse .video-copy { order: 2; }
 .video-copy h2 { margin-bottom: 24px; }
@@ -242,7 +254,7 @@ body,
 .quiz-options { display: grid; gap: 12px; margin: 45px auto 0; width: 72%; }
 .quiz-option { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; color: var(--cyan); font-size: 0.7em; padding: 17px 22px; }.quiz-option span { color: var(--ink); margin-left: 24px; }
 .answer { color: var(--mint); font-size: 0.7em; margin: 28px auto 0; width: 72%; }.answer span { color: var(--muted); font-size: 0.8em; }
-.break-slide { align-items: center; display: flex !important; flex-direction: column; justify-content: center; text-align: center !important; }.break-slide h2 { font-size: 3.4em; margin: 0; }.break-prompt { color: var(--muted); font-size: 0.58em; margin-top: 40px; }
+.break-slide { align-items: center; display: flex; flex-direction: column; justify-content: center; text-align: center !important; }.break-slide h2 { font-size: 3.4em; margin: 0; }.break-prompt { color: var(--muted); font-size: 0.58em; margin-top: 40px; }
 
 /* Autonomy and definitions */
 .autonomy-scale { align-items: center; display: grid; grid-template-columns: 1fr 75px 1fr 75px 1fr; margin-top: 85px; }
@@ -274,12 +286,8 @@ body,
 /* Close */
 .takeaways { display: grid; gap: 15px; margin-top: 35px; }.takeaways > div { align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; display: grid; gap: 20px; grid-template-columns: 70px 1fr; padding: 22px 28px; }.takeaways b { color: var(--cyan); font-family: ui-monospace, monospace; font-size: 0.53em; }.takeaways p { font-size: 0.61em; }.end-slide h2 { font-size: 2em; }.end-slide .lede { color: var(--cyan); }
 
-@media (max-width: 900px) {
-  .deck-chrome { display: none; }
-}
-
 @media print {
-  .deck-chrome { display: none; }
+  .deck-chrome, .deck-number, .deck-progress { display: none; }
   .media-fallback { display: none !important; }
 }
 
@@ -329,7 +337,8 @@ body,
 .budget > span:nth-child(3) { border-left-color: var(--coral); }
 
 /* Prefill and decode */
-.phase-cards { display: grid; gap: 22px; grid-template-columns: repeat(2, 1fr); margin-top: 40px; }
+.phase-cards { display: grid; gap: 22px; grid-template-columns: repeat(2, 1fr); margin-top: 28px; }
+.phase-cards + .calc { margin-top: 28px; }
 .phase-card { background: var(--panel); border: 1px solid var(--cyan); border-radius: 14px; padding: 22px 24px; }
 .phase-card.decode { border-color: var(--coral); }
 .phase-card header { align-items: baseline; display: flex; gap: 14px; }
@@ -351,7 +360,7 @@ body,
 .product-card .examples { color: var(--cyan); font-size: 0.42em; margin-top: 10px; }
 .answer-label { color: var(--muted); font-size: 0.7em; margin: 28px auto 0 !important; width: 72%; }
 .answer { margin-top: 14px !important; }
-.quiz-options.fragment.visible .quiz-option { animation: quiz-in 0.45s ease both; }
+.quiz-options.slidev-vclick-target:not(.slidev-vclick-hidden) .quiz-option { animation: quiz-in 0.45s ease both; }
 .quiz-options .quiz-option:nth-child(2) { animation-delay: 0.15s !important; }
 .quiz-options .quiz-option:nth-child(3) { animation-delay: 0.3s !important; }
 @keyframes quiz-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }

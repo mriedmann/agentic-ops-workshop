@@ -22,25 +22,22 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
-      - name: Install reveal.js
+      - name: Install dependencies
         run: npm ci
+        env:
+          # PDF export uses a local Chrome; the bundled Chromium is not needed here.
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
 
       - name: Check slides
         run: npm run check:strict
 
-      - name: Assemble site
+      - name: Build site
         run: |
           set -euo pipefail
-          mkdir -p _site/node_modules/reveal.js
-          cp index.html styles.css presentation.js _site/
-          cp -r media _site/media
-          # Only the parts of reveal.js the deck actually loads, plus its license.
-          cp -r node_modules/reveal.js/dist _site/node_modules/reveal.js/dist
-          cp -r node_modules/reveal.js/plugin _site/node_modules/reveal.js/plugin
-          cp node_modules/reveal.js/LICENSE _site/node_modules/reveal.js/LICENSE
+          npx slidev build --base "/${{ github.event.repository.name }}/" --out _site
           cp LICENSE _site/LICENSE
 
       - name: Upload Pages artifact
