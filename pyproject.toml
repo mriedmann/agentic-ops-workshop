@@ -1,7 +1,7 @@
 [project]
 name = "agentic-ops-workshop"
 version = "0.1.0"
-description = "RevealJS and Manim workshop material for LLMs and Agentic Operations"
+description = "Slidev and Manim workshop material for LLMs and Agentic Operations"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

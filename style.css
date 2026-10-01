@@ -27,7 +27,7 @@ body,
   color: var(--ink);
 }
 
-/* Same reset the reveal.js deck used (Meyer reset), scoped to the slides at element specificity (class rules still win) */
+/* Meyer reset, scoped to the slides at element specificity (class rules still win) */
 :where(.deck, .deck-chrome) :is(div, span, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, code, em, img, small, strong, sub, sup, b, u, i, dl, dt, dd, ol, ul, li, article, aside, footer, header, section, video) {
   border: 0;
   font: inherit;
@@ -85,7 +85,7 @@ body,
 .deck p, .deck li { line-height: 1.35; }
 .deck code { color: var(--cyan); font-family: "DejaVu Sans Mono", ui-monospace, monospace; }
 
-/* Clicks fade like reveal.js fragments did */
+/* Clicks fade in softly */
 .deck .slidev-vclick-target { transition: opacity 0.2s ease, visibility 0.2s ease; }
 .deck .slidev-vclick-hidden { visibility: hidden; }
 
