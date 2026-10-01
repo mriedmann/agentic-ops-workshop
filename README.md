@@ -7,7 +7,7 @@ Workshop-Unterlagen für erfahrene Linux-/OpenShift-Operator:innen: LLM-Grundlag
 - `slides.md` — Slidev-Präsentation mit Speaker Notes (HTML-Folien, Kommentare am Folienende sind Notizen)
 - `style.css`, `layouts/deck.vue`, `global-top.vue`, `components/` — Gestaltung, Folienlayout, Kopf-/Fußzeile, Stationsleiste und Video-Komponente
 - `animations.py` — neun Manim-Szenen für die zentralen Konzepte, mit Klick-Haltepunkten
-- `OUTLINE.manual.md` — handschriftliche Struktur, Grundlage der Folien
+- `AGENT.md` — Leitfaden für AI-Agenten: didaktische Regeln und technische Konventionen für dieses und künftige Workshop-Decks
 
 ## Konventionen im Deck
 

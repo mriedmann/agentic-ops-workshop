@@ -301,7 +301,7 @@ body,
 .roadmap code { font-size: 0.4em; white-space: nowrap; }
 .layer-label { color: var(--amber); font-size: 0.4em; font-weight: 700; margin-top: 10px; }
 
-/* Step rail: current pipeline station on basics slides (rendered from data-step) */
+/* Step rail: current pipeline station on basics slides (components/StepRail.vue, frontmatter `step` / `exercise`) */
 .step-rail { display: flex; gap: 4px; list-style: none !important; margin: 0 !important; padding: 0 !important; position: absolute; right: 76px; top: 26px; }
 .step-rail li { border: 1px solid var(--line); border-radius: 5px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; opacity: 0.4; padding: 4px 8px; }
 .step-rail li.layer { border-bottom-color: var(--amber); }
