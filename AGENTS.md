@@ -1,4 +1,4 @@
-# AGENT.md
+# AGENTS.md
 
 Guidance for AI agents that create or modify workshop presentations in this repository.
 It distils the planning outline and two rounds of review feedback on the "LLMs & Agentic
