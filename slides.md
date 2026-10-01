@@ -1,4 +1,5 @@
 ---
+# No theme: the whole design lives in style.css and layouts/deck.vue.
 theme: none
 title: "LLMs & Agentic Operations · Workshop"
 info: Workshop zu Large Language Models und Agentic Operations
@@ -7,8 +8,10 @@ htmlAttrs:
 canvasWidth: 1280
 aspectRatio: 16/9
 transition: fade
+# Hash routing (#/12) so direct links to a slide work on GitHub Pages.
 routerMode: hash
 colorSchema: dark
+# No web fonts: the deck has to work without an internet connection.
 fonts:
   provider: none
 defaults:
@@ -912,9 +915,16 @@ bg: "#091a2d"
 <div class="break-prompt">Wir wechseln in Terminal und Cluster.</div>
 
 <!--
-Vorher: Namespace zurücksetzen, Incident neu auslösen, Secrets aus der Ansicht nehmen.
+Vor dem Termin prüfen:
 
-Fallback bereithalten: Screen Recording oder gespeicherte Tool-Ausgaben, falls der Cluster klemmt.
+- Test-Namespace und dedizierter Read-only-ServiceAccount sind verfügbar.
+- LiteLLM-, MCP- und OpenCode-Konfiguration sind vorbereitet, ohne sichtbare Secrets.
+- Der Incident ist reproduzierbar, der Reset-Schritt ist dokumentiert.
+- Screen Recording oder gespeicherte Tool-Ausgaben liegen als Offline-Fallback bereit.
+
+Direkt vorher: Namespace zurücksetzen, Incident neu auslösen, Secrets aus der Ansicht nehmen.
+
+Falls der Cluster klemmt: auf den Fallback wechseln, nicht live debuggen.
 
 Bei jedem Tool-Aufruf kurz innehalten: Welche Argumente, welche Rechte, welches Ergebnis?
 -->
