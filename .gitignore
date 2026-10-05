@@ -20,3 +20,6 @@ _site/
 # Slidev export output
 slides-export.pdf
 slides-export/
+slides-handout.md
+slides-handout.pdf
+slides-handout-notes.pdf
