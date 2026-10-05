@@ -11,7 +11,7 @@ const { $frontmatter } = useSlideContext();
 <template>
   <section
     class="deck"
-    :class="[{ chapter: $frontmatter.chapter != null, 'video-slide': $frontmatter.video || $frontmatter.anim }, $attrs.class]"
+    :class="[{ chapter: $frontmatter.chapter != null, 'anim-slide': $frontmatter.anim }, $attrs.class]"
     :style="$frontmatter.bg ? { background: $frontmatter.bg } : undefined"
   >
     <StepRail v-if="$frontmatter.step" kind="pipeline" :current="$frontmatter.step" />

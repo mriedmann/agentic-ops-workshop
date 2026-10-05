@@ -12,7 +12,6 @@ const warn = (message) => {
 };
 
 const root = new URL("../", import.meta.url);
-const publicFile = (path) => new URL(`public/${path}`, root);
 const { slides } = parseSync(readFileSync(new URL("slides.md", root), "utf8"), "slides.md");
 
 // The checks run on the HTML each slide expands to (see setup/expand.mjs).
@@ -28,39 +27,7 @@ const decks = slides.map((slide, index) => {
 });
 syntaxErrors.forEach((problem) => warn(`Syntax: ${problem}`));
 
-const videos = decks.filter((slide) => slide.frontmatter.video).map((slide) => `media/${slide.frontmatter.video}.mp4`);
-const missing = videos.filter((src) => !existsSync(publicFile(src)));
-
 console.log(`Slides: ${slides.length}`);
-console.log(`Manim videos referenced: ${videos.length}`);
-if (missing.length) {
-  warn(`Not rendered yet: ${missing.join(", ")}`);
-  warn("Run: ./scripts/render-animations.sh");
-} else {
-  console.log("All referenced videos exist.");
-}
-
-// Stepped videos: the bullets and [video] steps of a slide must match the stops of its video.
-const problems = [];
-for (const { html, title } of decks) {
-  const stepsFile = html.match(/<StepVideo[^>]*\ssteps="([^"]+)"/)?.[1];
-  const steps = [...html.matchAll(/data-video-step="(\d+)"/g)].map((match) => Number(match[1]));
-  if (/<video\b/.test(html)) problems.push(`${title}: <video> direkt in der Folie (video: im Frontmatter verwenden).`);
-  if ([...html.matchAll(/<[^>]*data-video-step[^>]*>/g)].some(([tag]) => !/\bv-click\b/.test(tag))) {
-    problems.push(`${title}: data-video-step ohne v-click am selben Element.`);
-  }
-  if (!stepsFile) continue;
-  if (!existsSync(publicFile(stepsFile))) {
-    problems.push(`${stepsFile} fehlt – Animationen neu rendern.`);
-    continue;
-  }
-  const { stops } = JSON.parse(readFileSync(publicFile(stepsFile), "utf8"));
-  const expected = stops.map((_, index) => index + 1).join(",");
-  const actual = [...new Set(steps)].sort((a, b) => a - b).join(",");
-  if (expected !== actual) problems.push(`${stepsFile}: ${stops.length} Stops, Folie nutzt Schritte [${actual}] (Aufzählungspunkte + [video]).`);
-}
-problems.forEach((problem) => warn(`Video-Steps: ${problem}`));
-if (!problems.length) console.log("All stepped videos match their clicks.");
 
 // Scene animations: the bullets and [anim] steps of a slide must match the labels s1, s2, … of its scene.
 const sceneFile = (name) => new URL(`components/anim/${name.replace(/(^|-)(\w)/g, (_, _dash, char) => char.toUpperCase())}.vue`, root);
@@ -134,7 +101,7 @@ function visibleText(slide) {
       continue;
     }
     depth += 1;
-    if (!skipDepth && (SKIP_CLASS.test(attrs) || /\bv-click\b/.test(attrs) || ["h1", "h2", "StepVideo", "StepAnim"].includes(name))) skipDepth = depth;
+    if (!skipDepth && (SKIP_CLASS.test(attrs) || /\bv-click\b/.test(attrs) || ["h1", "h2", "StepAnim"].includes(name))) skipDepth = depth;
   }
   if (!skipDepth) text += slide.slice(last);
   return text.replace(/&[a-z]+;/g, "").replace(/\s+/g, " ").trim();

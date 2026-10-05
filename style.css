@@ -28,7 +28,7 @@ body,
 }
 
 /* Meyer reset, scoped to the slides at element specificity (class rules still win) */
-:where(.deck, .deck-chrome) :is(div, span, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, code, em, img, small, strong, sub, sup, b, u, i, dl, dt, dd, ol, ul, li, article, aside, footer, header, section, video) {
+:where(.deck, .deck-chrome) :is(div, span, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, code, em, img, small, strong, sub, sup, b, u, i, dl, dt, dd, ol, ul, li, article, aside, footer, header, section) {
   border: 0;
   font: inherit;
   font-size: 100%;
@@ -213,18 +213,16 @@ body,
 .warning-line { color: var(--coral); font-size: 0.54em; margin: 45px auto 0 !important; width: 82%; }
 
 /* Video layouts */
-.video-slide { align-items: center; display: grid; gap: 44px; grid-template-columns: 0.7fr 1.3fr; }
-.video-slide.reverse { grid-template-columns: 1.3fr 0.7fr; }
-.video-slide.reverse .video-copy { order: 2; }
-.video-copy h2 { margin-bottom: 24px; }
-.video-copy p { color: var(--muted); font-size: 0.57em; }
+.anim-slide { align-items: center; display: grid; gap: 44px; grid-template-columns: 0.7fr 1.3fr; }
+.anim-slide.reverse { grid-template-columns: 1.3fr 0.7fr; }
+.anim-slide.reverse .anim-copy { order: 2; }
+.anim-copy h2 { margin-bottom: 24px; }
+.anim-copy p { color: var(--muted); font-size: 0.57em; }
 .media-frame { background: #07111f; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; position: relative; width: 100%; }
 .media-frame::after { border: 1px solid rgb(77 227 255 / 12%); border-radius: inherit; content: ""; inset: 9px; pointer-events: none; position: absolute; }
-.media-frame video { display: block; min-height: 405px; object-fit: contain; width: 100%; }
-.media-fallback { align-items: center; color: var(--muted); display: none; font-size: 0.46em; inset: 0; justify-content: center; position: absolute; }
-.media-frame.missing video { visibility: hidden; }
-.video-step { display: none; }
-.media-frame.missing .media-fallback { display: flex; }
+/* Shown instead of a scene whose component is missing. */
+.media-fallback { align-items: center; aspect-ratio: 16 / 9; color: var(--muted); display: flex; font-size: 0.46em; justify-content: center; }
+.anim-step { display: none; }
 .clean-list { list-style: none !important; margin: 28px 0 0 !important; padding: 0 !important; }
 .clean-list li { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.52em; padding: 13px 0 13px 23px; position: relative; }
 .clean-list li::before { color: var(--cyan); content: "→"; left: 0; position: absolute; }
@@ -269,7 +267,7 @@ body,
 .mcp-client.proxy { border-color: var(--amber); }.mcp-client, .mcp-server { background: var(--panel); border: 1px solid var(--cyan); border-radius: 13px; padding: 28px; text-align: center; }.mcp-server { border-color: var(--coral); }.mcp-client small, .mcp-client b, .mcp-client span, .mcp-server small, .mcp-server b, .mcp-server span { display: block; }.mcp-client small, .mcp-server small { color: var(--muted); font-size: 0.35em; }.mcp-client b, .mcp-server b { font-size: 0.65em; margin: 16px 0; }.mcp-client span, .mcp-server span { color: var(--muted); font-size: 0.42em; }.mcp-wire { align-items: center; display: grid; gap: 10px; grid-template-columns: 1fr 1fr; position: relative; text-align: center; }.mcp-wire span { color: var(--muted); font-size: 0.36em; grid-column: 1 / 3; }.mcp-wire i { background: linear-gradient(90deg, var(--cyan), var(--coral)); grid-column: 1 / 3; height: 2px; }.mcp-wire code { font-size: 0.36em; }
 
 /* Controls and trace */
-.architecture-video { grid-template-columns: 0.58fr 1.42fr; }
+.architecture-anim { grid-template-columns: 0.58fr 1.42fr; }
 .control-layers { display: grid; gap: 12px; grid-template-columns: repeat(5, 1fr); margin-top: 75px; }.control { background: linear-gradient(180deg, var(--panel-2), var(--panel)); border-top: 3px solid var(--cyan); min-height: 250px; padding: 20px; }.control span { color: var(--cyan); font-family: ui-monospace, monospace; font-size: 0.4em; }.control b { display: block; font-size: 0.62em; margin: 50px 0 18px; }.control small { color: var(--muted); font-size: 0.4em; line-height: 1.5; }
 .trace { align-items: stretch; display: grid; gap: 14px; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; margin: 90px 0 60px; }.trace > div { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 22px; }.trace small { color: var(--cyan); display: block; font-size: 0.34em; }.trace b { display: block; font-size: 0.49em; line-height: 1.4; margin-top: 16px; }.trace > span { align-self: center; color: var(--muted); }
 
@@ -288,7 +286,6 @@ body,
 
 @media print {
   .deck-chrome, .deck-number, .deck-progress { display: none; }
-  .media-fallback { display: none !important; }
 }
 
 /* GPT pipeline roadmap (Leitfaden) */
@@ -371,9 +368,11 @@ body,
 .end-slide .end-note { color: var(--muted); font-size: 0.58em; margin-top: 18px !important; }
 
 /* Scene animations (components/anim/*.vue): SVG on a 1280×720 canvas, animated by anime.js.
-   Transforms scale from the element's own box, so scaleX grows from its left edge. */
+   Tweened transforms scale from the element's own box, so scaleX grows from its left edge.
+   A static transform attribute (rotate, translate) keeps the usual SVG canvas coordinates. */
 .scene { display: block; height: auto; width: 100%; }
 .scene * { transform-box: fill-box; }
+.scene [transform] { transform-box: view-box; }
 .scene text { fill: var(--ink); font-family: var(--deck-font); }
 .scene text.muted { fill: var(--muted); }
 .scene text.mono { font-family: ui-monospace, "DejaVu Sans Mono", monospace; }

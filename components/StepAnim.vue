@@ -68,7 +68,10 @@ function sync(animate: boolean) {
 
 // The scene registers its timeline when it is mounted, before this component is.
 provide(SCENE_TIMELINE, (tl) => {
-  timeline.value = tl;  tl.seek(0);
+  timeline.value = tl;
+  // Tooling (forward/backward seek comparison) sets window.__sceneDebug to reach the timelines.
+  if ((window as any).__sceneDebug) ((window as any).__sceneTimelines ??= {})[props.name] = tl;
+  tl.seek(0);
   queueMicrotask(() => sync(false));
 });
 

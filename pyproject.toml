@@ -1,9 +1,0 @@
-[project]
-name = "agentic-ops-workshop"
-version = "0.1.0"
-description = "Slidev and Manim workshop material for LLMs and Agentic Operations"
-readme = "README.md"
-requires-python = ">=3.11"
-dependencies = [
-    "manim>=0.19,<0.20",
-]

@@ -161,14 +161,13 @@ Die Zahlen bei Logits und Wahrscheinlichkeiten sind zur Veranschaulichung gewäh
 section: LLM
 step: text token
 eyebrow: SCHRITT 1 · TOKEN
-video: token-pipeline
-videoLabel: Animation nach `./scripts/render-animations.sh`
+anim: token-pipeline
 ---
 
 ## Text wird in Tokens
 ## *zerlegt und nummeriert*
 
-[video]
+[anim]
 
 - Tokens sind Textstücke, keine Wörter
 - Jedes Token hat eine feste ID im Vokabular
@@ -188,8 +187,7 @@ Die ID ist nur eine Adresse im Vokabular und trägt selbst keine Bedeutung. Ein 
 section: LLM
 step: embedding
 eyebrow: SCHRITT 2 · EMBEDDING
-video: token-vector
-videoLabel: Manim · Token als Vektor
+anim: token-vector
 ---
 
 ## Jedes Token wird zu einer
@@ -199,7 +197,7 @@ videoLabel: Manim · Token als Vektor
 - Die Zahlen sind gelernt, nicht von Hand gesetzt
 - Ein anderes Wort ergibt ein anderes Muster
 
-[video]
+[anim]
 
 > Erst als Zahlen wird Bedeutung für das Modell rechenbar.
 
@@ -216,14 +214,13 @@ class: reverse
 section: LLM
 step: embedding
 eyebrow: SCHRITT 2 · EMBEDDING
-video: embedding-space
-videoLabel: Manim · Embedding-Raum
+anim: embedding-space
 ---
 
 ## Nähe ist Ähnlichkeit,
 ## *Richtung ist Beziehung*
 
-[video]
+[anim]
 
 - Wörter gleicher Art landen in gemeinsamen Gruppen
 - Abstand zeigt, wie ähnlich zwei Wörter sind
@@ -246,14 +243,13 @@ class: reverse
 section: LLM
 step: attention
 eyebrow: SCHRITT 3 · ATTENTION
-video: attention-ops
-videoLabel: Manim · Self-Attention
+anim: attention-ops
 ---
 
 ## Jedes Token schaut
 ## auf *die anderen*
 
-[video]
+[anim]
 
 - Das aktuelle Token fragt: was ist hier relevant?
 - Jedes andere Token bekommt ein Gewicht
@@ -274,21 +270,20 @@ class: reverse
 section: LLM
 step: attention ffn residual
 eyebrow: TRANSFORMER · EIN LAYER
-video: transformer-block
-videoLabel: Manim · Transformer-Layer
+anim: transformer-block
 ---
 
 ## Ein Layer,
 ## *viele Male*
 
-[video]
+[anim]
 
 - Attention mischt Information zwischen den Tokens
 - Residual + Norm: das Alte bleibt, das Neue kommt dazu
 - Feed Forward verarbeitet jedes Token für sich
 - Dieselbe Form wiederholt sich Layer für Layer
 
-[video]
+[anim]
 
 > Jeder Layer verschiebt den Vektor ein Stück – der letzte Stand wird zu den Logits.
 
@@ -597,8 +592,7 @@ Für viele Aufgaben reicht ein Workflow. Ein Agent lohnt sich, wenn der Weg vorh
 class: reverse
 section: Agents
 eyebrow: AGENT-LOOP
-video: agent-loop
-videoLabel: Manim · Agent-Loop
+anim: agent-loop
 ---
 
 ## Entscheiden.
@@ -608,7 +602,7 @@ videoLabel: Manim · Agent-Loop
 - Tools + Policies
 - Budget + Stop-Bedingung
 
-[video]
+[anim]
 
 > Ein Agent ist ein Loop: Das Modell schlägt vor, die Plattform entscheidet, was ausgeführt wird.
 
@@ -766,11 +760,10 @@ eyebrow: PLATTFORM
 ## *Operations*
 
 ---
-class: architecture-video
+class: architecture-anim
 section: Agentic Ops
 eyebrow: SHOWCASE-ARCHITEKTUR
-video: trust-boundary
-videoLabel: Manim · Architektur & Grenzen
+anim: trust-boundary
 ---
 
 ## Drei Pfade,

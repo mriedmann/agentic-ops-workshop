@@ -1,4 +1,6 @@
-import { createTimeline, type Timeline } from "animejs";
+import { createTimeline, svg, type Timeline } from "animejs";
+
+export { svg };
 import { inject, onBeforeUnmount, onMounted, type InjectionKey, type Ref } from "vue";
 
 // A scene is an SVG component with one anime.js timeline. Each main step ends with
@@ -35,6 +37,18 @@ export const fadeIn = (extra: Record<string, unknown> = {}) => ({ opacity: [0, 1
 export const fadeOut = (extra: Record<string, unknown> = {}) => ({ opacity: [1, 0], duration: 300, ...extra });
 // GrowFromEdge(LEFT): scales from the left edge of the element's box.
 export const growFromLeft = (to = 1, extra: Record<string, unknown> = {}) => ({ scaleX: [0, to], duration: 600, ...extra });
+// GrowFromCenter: the element needs style="transform-origin: center" (default is its top left).
+export const growFromCenter = (extra: Record<string, unknown> = {}) => ({ opacity: [0, 1], scale: [0, 1], duration: 500, ...extra });
+// Create(line) / GrowArrow: draws strokes from start to end.
+//   tl.add(svg.createDrawable(q("arc")), drawIn())
+// Arrow heads are separate elements (fadeIn after the line) or markers.
+export const drawIn = (extra: Record<string, unknown> = {}) => ({ draw: ["0 0", "0 1"], duration: 600, ...extra });
+// MoveAlongPath: moves an element (drawn at the path's origin, e.g. a circle at cx=0 cy=0)
+// along an SVG path.   tl.add(q("dot"), alongPath(q("arc")[0], { duration: 800 }))
+export function alongPath(path: Element, extra: Record<string, unknown> = {}) {
+  const { translateX, translateY } = svg.createMotionPath(path as SVGGeometryElement);
+  return { translateX, translateY, duration: 800, ease: "inOutSine", ...extra };
+}
 // FadeIn(shift=…): fades in while sliding into place. translateX/Y, not x/y: on SVG
 // elements with x/y attributes (text, rect) anime.js would animate the attributes instead.
 export const slideIn = (dx = -12, dy = 0, extra: Record<string, unknown> = {}) => ({
