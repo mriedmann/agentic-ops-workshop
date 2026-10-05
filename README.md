@@ -43,6 +43,12 @@ npm run export
 
 Schreibt `slides-export.pdf` mit einer Seite pro Klickzustand. Liegt Chrome nicht als `google-chrome` im Pfad, den Pfad über `CHROME_PATH=…` angeben.
 
+```bash
+npm run export:handout
+```
+
+Kurzfassung für Teilnehmende: `slides-handout.pdf` zeigt jede Folie einmal im Endzustand, Folien mit Animation einmal pro Animationsschritt. Die Sprechernotizen landen in `slides-handout-notes.pdf`.
+
 ## Animationen rendern
 
 Nur nötig, wenn `animations.py` geändert wurde.

@@ -183,6 +183,7 @@ npm run check                   # conventions, prints warnings
 npm run check:strict            # same, fails on any warning; runs in CI
 npm run build                   # static site
 npm run export                  # PDF, one page per click
+npm run export:handout          # condensed PDF for participants, plus notes PDF
 ./scripts/render-animations.sh  # after changing animations.py
 ```
 
@@ -377,6 +378,11 @@ Rules:
 - **PDF export** runs through Google Chrome (`--executable-path`, overridable with
   `CHROME_PATH`). The Chromium bundled with Playwright cannot play H.264, so the video
   frames would be blank.
+- **Handout:** `scripts/export-handout.mjs` writes a temporary deck in which each video
+  slide is repeated once per video stop (bullets cut off after that step, key message and
+  notes only on the last copy) and exports it without clicks. Other slides appear once,
+  in their final state. Keep video slides to step lines, key message and fineprint, so
+  this cut stays correct.
 - **GitHub Pages:** `.github/workflows/pages.yml` runs the strict check on every push and
   pull request and deploys `main`. The site is built with the repository name as base
   path, and slide URLs use hash routing (`#/12`) so direct links work there. Reference
