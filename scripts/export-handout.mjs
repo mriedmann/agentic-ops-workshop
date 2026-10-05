@@ -11,7 +11,7 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const entry = "slides-handout.md";
 
 // A step line advances the video (see "Animations" in AGENTS.md).
-const isStep = (line) => /^(- |\d+\. |\[video\]\s*$)/.test(line);
+const isStep = (line) => /^(- |\d+\. |\[(video|anim)\]\s*$)/.test(line);
 
 function videoCopies(slide) {
   const raw = slide.raw;
@@ -34,7 +34,7 @@ function videoCopies(slide) {
 }
 
 const deck = parseSync(readFileSync(`${root}slides.md`, "utf8"), "slides.md");
-deck.slides = deck.slides.flatMap((slide) => (slide.frontmatter.video ? videoCopies(slide) : [slide]));
+deck.slides = deck.slides.flatMap((slide) => (slide.frontmatter.video || slide.frontmatter.anim ? videoCopies(slide) : [slide]));
 // export-notes opens /presenter/print without a hash and would get the cover slide instead.
 deck.slides[0].raw = deck.slides[0].raw.replace(/^routerMode: hash$/m, "routerMode: history");
 

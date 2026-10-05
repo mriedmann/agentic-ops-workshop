@@ -306,8 +306,7 @@ Residual erklärt, warum tiefe Netze trainierbar bleiben: der alte Zustand geht 
 section: LLM
 step: logits probs
 eyebrow: SCHRITT 4 · LOGITS & PROBABILITIES
-video: next-token
-videoLabel: Manim · Next-Token-Verteilung
+anim: next-token
 ---
 
 ## Wahrscheinlich,
@@ -455,21 +454,20 @@ Die Zusammenschau der drei Posten kommt auf der nächsten Folie.
 class: reverse
 section: Betrieb
 eyebrow: BETRIEB · GPU-SPEICHER
-video: gpu-memory
-videoLabel: Manim · GPU-Speicher
+anim: gpu-memory
 ---
 
 ## Drei Posten teilen sich
 ## *eine GPU*
 
-[video]
+[anim]
 
 - Gewichte: konstant, unabhängig von der Last
 - KV-Cache: wächst mit der Kontextlänge …
 - … und mit jedem parallelen Request
 - Aktivierungen: Spitze während der Rechnung
 
-[video]
+[anim]
 
 > Nur die Gewichte sind konstant – Kontext und Parallelität bestimmen den Rest.
 

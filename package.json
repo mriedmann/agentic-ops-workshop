@@ -17,5 +17,8 @@
     "@slidev/cli": "^53.0.0",
     "@slidev/parser": "^53.0.0",
     "playwright-chromium": "^1.63.0"
+  },
+  "dependencies": {
+    "animejs": "^4.5.0"
   }
 }
