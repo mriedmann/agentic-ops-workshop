@@ -373,6 +373,31 @@ Rules:
 - Videos are committed. Rendering does not run in CI: render locally and commit the files
   from `public/media/`.
 
+### Scene animations (replacing the videos)
+
+The videos are being replaced by scene components animated with anime.js; `next-token`
+and `gpu-memory` are ported. New and reworked animations use scenes.
+
+- One component per animation: `components/anim/<Name>.vue` for `anim: <name>` in the
+  frontmatter (kebab-case → PascalCase). `[anim]` lines work like `[video]` lines; there
+  is no `videoLabel`.
+- The template is an SVG with `viewBox="0 0 1280 720"` holding every element in its
+  initial state (`style="opacity: 0"`, `transform: scaleX(0)`). Name animated elements
+  with `data-part="…"`, not classes: deck classes (`answer`, `prompt`) and UnoCSS
+  utilities would style them. Text styles: `class="muted"`, `class="mono"`.
+- The script builds the timeline with `useSceneTimeline` from `animations/scene.ts` and
+  reads top to bottom like the slide: `tl.add(q("part other"), fadeIn())`, … and ends
+  each step with `tl.label("s1")`, `tl.label("s2")`, … as literal strings — the check
+  counts them against the slide's step lines.
+- Give every tween explicit `[from, to]` values and use the presets in
+  `animations/scene.ts` (`fadeIn`, `fadeOut`, `growFromLeft`, `slideIn`), so seeking
+  backwards, print and the handout all show the right state. `StepAnim.vue` plays forward
+  on a live click and jumps everywhere else.
+- Use `translateX`/`translateY`, not `x`/`y`: on SVG elements anime.js would animate the
+  attributes. Colours come from the CSS tokens (`var(--cyan)`) in `style` bindings.
+- The running example lives in `animations/example.ts`; scenes derive their data from it.
+- Nothing to render: the dev server shows changes immediately.
+
 ## 7. Export and publishing
 
 - **PDF export** runs through Google Chrome (`--executable-path`, overridable with

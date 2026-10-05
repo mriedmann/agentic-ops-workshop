@@ -369,3 +369,11 @@ body,
 .quiz-cards > div { display: flex; flex-direction: column; }
 .quiz-cards b { margin-bottom: 14px; }
 .end-slide .end-note { color: var(--muted); font-size: 0.58em; margin-top: 18px !important; }
+
+/* Scene animations (components/anim/*.vue): SVG on a 1280×720 canvas, animated by anime.js.
+   Transforms scale from the element's own box, so scaleX grows from its left edge. */
+.scene { display: block; height: auto; width: 100%; }
+.scene * { transform-box: fill-box; }
+.scene text { fill: var(--ink); font-family: var(--deck-font); }
+.scene text.muted { fill: var(--muted); }
+.scene text.mono { font-family: ui-monospace, "DejaVu Sans Mono", monospace; }

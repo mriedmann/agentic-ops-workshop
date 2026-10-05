@@ -155,8 +155,8 @@ function parseBody(content) {
     } else if ((match = line.match(/^>\s+(.*)$/))) {
       blocks.push({ type: "key", ...splitClasses(match[1].trim()) });
       i += 1;
-    } else if (line.trim() === "[video]") {
-      blocks.push({ type: "videostep" });
+    } else if (line.trim() === "[video]" || line.trim() === "[anim]") {
+      blocks.push({ type: "mediastep", kind: line.trim().slice(1, -1) });
       i += 1;
     } else if (/^-\s+/.test(line) || /^\d+\.\s+/.test(line)) {
       const ordered = /^\d/.test(line);
@@ -193,12 +193,15 @@ export function expandSlide(content, frontmatter = {}) {
   const isBreak = slideClasses.includes("break-slide");
   const isChapter = frontmatter.chapter != null;
   const isStatic = isHero || isBreak || isChapter;
+  // A slide with a stepped visual: `anim:` (scene component) or `video:` (rendered video).
+  const anim = frontmatter.anim;
   const video = frontmatter.video;
+  const media = anim ? "anim" : video ? "video" : null;
 
   let clicks = 0;
-  let videoSteps = 0;
+  let mediaSteps = 0;
   const click = () => ` v-click="${++clicks}"`;
-  const videoStep = () => (video ? ` data-video-step="${++videoSteps}"` : "");
+  const mediaStep = () => (media ? ` data-${media}-step="${++mediaSteps}"` : "");
 
   const blocks = parseBody(content);
   const keyIndex = blocks.findIndex((b) => b.type === "key");
@@ -221,7 +224,7 @@ export function expandSlide(content, frontmatter = {}) {
         head.push(`<h${block.level}>${block.rows.map(inline).join("<br />")}</h${block.level}>`);
         break;
       case "bullets":
-        body.push(`<ul class="clean-list">\n${block.items.map((item) => `  <li${click()}${videoStep()}>${inline(item)}</li>`).join("\n")}\n</ul>`);
+        body.push(`<ul class="clean-list">\n${block.items.map((item) => `  <li${click()}${mediaStep()}>${inline(item)}</li>`).join("\n")}\n</ul>`);
         break;
       case "steps":
         body.push(
@@ -233,9 +236,9 @@ export function expandSlide(content, frontmatter = {}) {
             .join("\n")}\n</ol>`,
         );
         break;
-      case "videostep":
-        if (!video) throw new Error("[video] is only allowed on slides with `video:` in the frontmatter.");
-        body.push(`<span class="video-step"${click()}${videoStep()}></span>`);
+      case "mediastep":
+        if (media !== block.kind) throw new Error(`[${block.kind}] is only allowed on slides with \`${block.kind}:\` in the frontmatter.`);
+        body.push(`<span class="video-step"${click()}${mediaStep()}></span>`);
         break;
       case "block":
         body.push(renderBlock(block, click));
@@ -269,6 +272,10 @@ export function expandSlide(content, frontmatter = {}) {
   if (isChapter) {
     const number = String(frontmatter.chapter).padStart(2, "0");
     return [`<div class="chapter-number">${number}</div>`, `<div>${head.join("")}</div>`, ...body, ...tail].join("\n");
+  }
+
+  if (anim) {
+    return [`<div class="video-copy">`, ...head, ...body, ...(key ? [key] : []), `</div>`, `<StepAnim name="${esc(String(anim))}" />`, ...tail].join("\n");
   }
 
   if (video) {

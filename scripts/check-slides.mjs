@@ -1,4 +1,5 @@
 import { readFileSync, existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { parseSync } from "@slidev/parser/core";
 import { expandSlide } from "../setup/expand.mjs";
 
@@ -61,6 +62,33 @@ for (const { html, title } of decks) {
 problems.forEach((problem) => warn(`Video-Steps: ${problem}`));
 if (!problems.length) console.log("All stepped videos match their clicks.");
 
+// Scene animations: the bullets and [anim] steps of a slide must match the labels s1, s2, … of its scene.
+const sceneFile = (name) => new URL(`components/anim/${name.replace(/(^|-)(\w)/g, (_, _dash, char) => char.toUpperCase())}.vue`, root);
+const sceneProblems = [];
+let scenes = 0;
+for (const { html, title } of decks) {
+  const name = html.match(/<StepAnim\s+name="([^"]+)"/)?.[1];
+  const steps = [...html.matchAll(/data-anim-step="(\d+)"/g)].map((match) => Number(match[1]));
+  if ([...html.matchAll(/<[^>]*data-anim-step[^>]*>/g)].some(([tag]) => !/\bv-click\b/.test(tag))) {
+    sceneProblems.push(`${title}: data-anim-step ohne v-click am selben Element.`);
+  }
+  if (!name) continue;
+  scenes += 1;
+  const file = sceneFile(name);
+  if (!existsSync(file)) {
+    sceneProblems.push(`${title}: Szene ${fileURLToPath(file).slice(fileURLToPath(root).length)} fehlt.`);
+    continue;
+  }
+  const labels = [...readFileSync(file, "utf8").matchAll(/\.label\(\s*["'`]s(\d+)["'`]/g)].map((match) => Number(match[1]));
+  const expected = labels.map((_, index) => index + 1).join(",");
+  if (labels.join(",") !== expected) sceneProblems.push(`${name}: Labels müssen s1, s2, … in dieser Reihenfolge sein, gefunden [${labels.join(",")}].`);
+  const actual = [...new Set(steps)].sort((a, b) => a - b).join(",");
+  if (expected !== actual) sceneProblems.push(`${name}: ${labels.length} Schritte, Folie nutzt Schritte [${actual}] (Aufzählungspunkte + [anim]).`);
+}
+console.log(`Scene animations referenced: ${scenes}`);
+sceneProblems.forEach((problem) => warn(`Szenen: ${problem}`));
+if (!sceneProblems.length) console.log("All scene animations match their clicks.");
+
 // Components: must exist, and `clicks="N"` must match the clicks the component uses (v-click="at", "at + 1", …).
 const componentProblems = [];
 const STATIC_SLIDE = /\b(hero|break-slide)\b/;
@@ -106,7 +134,7 @@ function visibleText(slide) {
       continue;
     }
     depth += 1;
-    if (!skipDepth && (SKIP_CLASS.test(attrs) || /\bv-click\b/.test(attrs) || ["h1", "h2", "StepVideo"].includes(name))) skipDepth = depth;
+    if (!skipDepth && (SKIP_CLASS.test(attrs) || /\bv-click\b/.test(attrs) || ["h1", "h2", "StepVideo", "StepAnim"].includes(name))) skipDepth = depth;
   }
   if (!skipDepth) text += slide.slice(last);
   return text.replace(/&[a-z]+;/g, "").replace(/\s+/g, " ").trim();
