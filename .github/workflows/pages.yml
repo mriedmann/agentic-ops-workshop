@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
         env:
-          # PDF export uses a local Chrome; the bundled Chromium is not needed here.
+          # Only the PDF export needs the bundled Chromium, and CI does not export.
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
 
       - name: Check slides

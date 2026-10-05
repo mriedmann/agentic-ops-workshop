@@ -1,16 +1,5 @@
-# Python-generated files
-__pycache__/
-*.py[oc]
-build/
+# Slidev build output
 dist/
-wheels/
-*.egg-info
-
-# Virtual environments
-.venv
-
-# Intermediate render files
-.rendered/
 node_modules/
 .DS_Store
 

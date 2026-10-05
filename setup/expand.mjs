@@ -1,6 +1,6 @@
 // Slide syntax: turns the compact Markdown of slides.md into the HTML the deck is styled for.
 //
-// A slide is a frontmatter block (eyebrow, chapter, video, …) plus a body of headings, lists,
+// A slide is a frontmatter block (eyebrow, chapter, anim, …) plus a body of headings, lists,
 // `::: kind` blocks, a key message (`> …`) and components. expandSlide() returns the HTML for
 // one slide and numbers every click in reading order, so slides.md never contains click numbers.
 // Used by setup/transformers.ts (Slidev) and scripts/check-slides.mjs. See AGENTS.md for the syntax.
@@ -155,8 +155,8 @@ function parseBody(content) {
     } else if ((match = line.match(/^>\s+(.*)$/))) {
       blocks.push({ type: "key", ...splitClasses(match[1].trim()) });
       i += 1;
-    } else if (line.trim() === "[video]" || line.trim() === "[anim]") {
-      blocks.push({ type: "mediastep", kind: line.trim().slice(1, -1) });
+    } else if (line.trim() === "[anim]") {
+      blocks.push({ type: "animstep" });
       i += 1;
     } else if (/^-\s+/.test(line) || /^\d+\.\s+/.test(line)) {
       const ordered = /^\d/.test(line);
@@ -193,15 +193,14 @@ export function expandSlide(content, frontmatter = {}) {
   const isBreak = slideClasses.includes("break-slide");
   const isChapter = frontmatter.chapter != null;
   const isStatic = isHero || isBreak || isChapter;
-  // A slide with a stepped visual: `anim:` (scene component) or `video:` (rendered video).
+  // A slide with a stepped animation (components/anim/, see AGENTS.md).
   const anim = frontmatter.anim;
-  const video = frontmatter.video;
-  const media = anim ? "anim" : video ? "video" : null;
+  if (frontmatter.video != null) throw new Error("`video:` is gone; animations are scene components (`anim:`).");
 
   let clicks = 0;
-  let mediaSteps = 0;
+  let animSteps = 0;
   const click = () => ` v-click="${++clicks}"`;
-  const mediaStep = () => (media ? ` data-${media}-step="${++mediaSteps}"` : "");
+  const animStep = () => (anim ? ` data-anim-step="${++animSteps}"` : "");
 
   const blocks = parseBody(content);
   const keyIndex = blocks.findIndex((b) => b.type === "key");
@@ -224,7 +223,7 @@ export function expandSlide(content, frontmatter = {}) {
         head.push(`<h${block.level}>${block.rows.map(inline).join("<br />")}</h${block.level}>`);
         break;
       case "bullets":
-        body.push(`<ul class="clean-list">\n${block.items.map((item) => `  <li${click()}${mediaStep()}>${inline(item)}</li>`).join("\n")}\n</ul>`);
+        body.push(`<ul class="clean-list">\n${block.items.map((item) => `  <li${click()}${animStep()}>${inline(item)}</li>`).join("\n")}\n</ul>`);
         break;
       case "steps":
         body.push(
@@ -236,9 +235,9 @@ export function expandSlide(content, frontmatter = {}) {
             .join("\n")}\n</ol>`,
         );
         break;
-      case "mediastep":
-        if (media !== block.kind) throw new Error(`[${block.kind}] is only allowed on slides with \`${block.kind}:\` in the frontmatter.`);
-        body.push(`<span class="video-step"${click()}${mediaStep()}></span>`);
+      case "animstep":
+        if (!anim) throw new Error("[anim] is only allowed on slides with `anim:` in the frontmatter.");
+        body.push(`<span class="anim-step"${click()}${animStep()}></span>`);
         break;
       case "block":
         body.push(renderBlock(block, click));
@@ -275,20 +274,7 @@ export function expandSlide(content, frontmatter = {}) {
   }
 
   if (anim) {
-    return [`<div class="video-copy">`, ...head, ...body, ...(key ? [key] : []), `</div>`, `<StepAnim name="${esc(String(anim))}" />`, ...tail].join("\n");
-  }
-
-  if (video) {
-    const label = inline(String(frontmatter.videoLabel ?? `Animation ${video}`));
-    return [
-      `<div class="video-copy">`,
-      ...head,
-      ...body,
-      ...(key ? [key] : []),
-      `</div>`,
-      `<StepVideo src="media/${video}.mp4" steps="media/${video}.steps.json">${label}</StepVideo>`,
-      ...tail,
-    ].join("\n");
+    return [`<div class="anim-copy">`, ...head, ...body, ...(key ? [key] : []), `</div>`, `<StepAnim name="${esc(String(anim))}" />`, ...tail].join("\n");
   }
 
   return [...head, ...body, ...tail, ...(key ? [key] : [])].join("\n");

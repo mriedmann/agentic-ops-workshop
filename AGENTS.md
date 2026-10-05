@@ -5,7 +5,7 @@ It distils the planning outline and two rounds of review feedback on the "LLMs &
 Operations" deck into rules that apply to any workshop built the same way.
 
 The first half is about teaching (what a good workshop deck looks like), the second half
-about this repository (how to build it with Slidev and Manim). When a rule and a user
+about this repository (how to build it with Slidev and anime.js). When a rule and a user
 request conflict, the user wins; when a rule and your taste conflict, the rule wins.
 
 ## 1. Before writing slides
@@ -95,7 +95,7 @@ and show it in the eyebrow (for example `BEGRIFFE · 8 MIN`).
   Setzling wurde ein großer …" → "Baum"). It shows that the concept is general, and it
   keeps the mechanism visible.
 - Define the example once, in code, and derive all visuals from it (see `EXAMPLE_*` in
-  `animations.py`).
+  `animations/example.ts`).
 
 ### Visuals
 
@@ -166,33 +166,32 @@ Every content slide has notes with:
 | `layouts/deck.vue` | Slide frame, renders the step rail |
 | `global-top.vue` | Footer: brand, chapter label, slide number, progress line |
 | `components/StepRail.vue` | Step rails and their stations |
-| `components/StepVideo.vue` | Click-stepped video |
+| `components/StepAnim.vue` | Click-stepped animation: plays a scene's timeline to the current step |
+| `components/anim/*.vue` | Scene animations, one per animation |
 | `components/*.vue` (others) | One-off diagrams used by a single slide |
-| `animations.py` | Manim scenes, one class per animation |
-| `public/media/` | Rendered videos and their `*.steps.json` |
+| `animations/scene.ts` | Timeline setup and motion presets for the scenes |
+| `animations/example.ts` | The running example and `softmax` |
 | `scripts/check-slides.mjs` | Convention checks, run in CI |
-| `scripts/render-animations.sh` | Renders all scenes |
+| `scripts/export-handout.mjs` | Condensed handout PDF |
 
 Commands:
 
 ```bash
 npm install                     # once; Node 22.12 or newer
-uv sync                         # once, only needed to render animations
 npm start                       # dev server on http://localhost:3030
 npm run check                   # conventions, prints warnings
 npm run check:strict            # same, fails on any warning; runs in CI
 npm run build                   # static site
 npm run export                  # PDF, one page per click
 npm run export:handout          # condensed PDF for participants, plus notes PDF
-./scripts/render-animations.sh  # after changing animations.py
 ```
 
 `npm run check` expands every slide with `setup/expand.mjs` and enforces the conventions
 below. It warns when:
 
 - a slide uses the syntax wrongly (unknown block, key message not last, …),
-- a referenced video or its `*.steps.json` is missing,
-- the bullets and `[video]` steps of a slide do not match the stops of its video,
+- a referenced scene component is missing,
+- the bullets and `[anim]` steps of a slide do not match the `tl.label("sN")` steps of its scene,
 - a component is missing, its `clicks="N"` does not match the clicks it uses, or it is
   visible on a content slide before the first click,
 - a content slide shows anything besides eyebrow, title and fineprint before the first click,
@@ -208,7 +207,7 @@ Extend the check when you add a convention that can be verified mechanically.
 - Project specifics stay next to what they describe, not in either document:
   - reasons for a setting: a comment at the setting (`slides.md` headmatter,
     `.github/workflows/pages.yml`, `uno.config.ts`),
-  - the running example: the `EXAMPLE_*` constants in `animations.py`,
+  - the running example: the `EXAMPLE_*` constants in `animations/example.ts`,
   - rail stations and brand text: `components/StepRail.vue`, `global-top.vue`,
   - anything the presenter must prepare or remember: the speaker notes of the slide
     where it matters (for example the demo checklist on the demo slide).
@@ -254,9 +253,9 @@ Hinweis für die Moderation …
 | `section` | Chapter label in the footer |
 | `eyebrow` | Small label above the title (category, time) |
 | `chapter` | Makes the slide a chapter slide and shows this number (`chapter: 3` → "03") |
-| `class` | Slide type: `hero` (cover, exit ticket), `break-slide` (break, demo placeholder), `quiz-slide`, `closing`; on video slides `reverse` puts the video left |
+| `class` | Slide type: `hero` (cover, exit ticket), `break-slide` (break, demo placeholder), `quiz-slide`, `closing`; on animation slides `reverse` puts the animation left, `architecture-anim` gives it more width |
 | `step` / `exercise` | Shows the step rail with these stations highlighted |
-| `video`, `videoLabel` | Makes the slide a video slide (see Animations); the label is the fallback text when the file is missing |
+| `anim` | Makes the slide an animation slide showing `components/anim/<Name>.vue` (see Animations) |
 | `bg` | Overrides the background colour |
 
 Quote a value that contains `: ` or starts with a special character. Prose belongs in
@@ -273,7 +272,7 @@ the body, not in the frontmatter, so this rarely matters.
 | `> text` | Key message. Add ` {.callout}` for the centred box. Must be the last click. | last |
 | `text {.fineprint}` | Small static note above the key message | – |
 | `text {.class}` | Paragraph with that class | one |
-| `[video]` | A click that only advances the video | one |
+| `[anim]` | A click that only advances the animation | one |
 | `<Component v-click />` | A component that appears as a whole | one |
 | `<Component clicks="2" />` | A component with its own clicks | as stated |
 
@@ -333,25 +332,27 @@ Rules:
 
 ## 6. Animations
 
-- One `SteppedScene` subclass per animation in `animations.py`, with a `slug`. Call
-  `self.step()` at the end of each main step; the timestamps are written to
-  `public/media/<slug>.steps.json`.
-- In the slide: `video: <slug>` and `videoLabel: …` in the frontmatter. Every bullet and
-  every `[video]` line is one video step, in order: the first plays the video to stop 1,
-  the second to stop 2, and so on. Put `[video]` before or after the bullets for steps
-  that have no bullet. The key message does not move the video.
+Animations are Vue components in `components/anim/`, drawn as SVG and animated with one
+anime.js timeline each. There is nothing to render: the dev server shows changes at once.
+
+- **One component per animation:** `anim: token-pipeline` in the frontmatter shows
+  `components/anim/TokenPipeline.vue` (kebab-case → PascalCase).
+- **Steps:** every bullet and every `[anim]` line of the slide is one step, in order: the
+  first plays the timeline to `s1`, the second to `s2`, and so on. Put `[anim]` before or
+  after the bullets for steps that have no bullet. The key message does not move the
+  animation. `StepAnim.vue` plays forward on a live click and jumps to the step everywhere
+  else (going back, overview, print, handout).
 
   ```md
   ---
   eyebrow: SCHRITT 1 · TOKEN
-  video: token-pipeline
-  videoLabel: Manim · Token-Pipeline
+  anim: token-pipeline
   ---
 
   ## Text wird in Tokens
   ## *zerlegt und nummeriert*
 
-  [video]
+  [anim]
 
   - Tokens sind Textstücke, keine Wörter
   - Jedes Token hat eine feste ID im Vokabular
@@ -362,51 +363,46 @@ Rules:
   Tokenisierung ist kein Stemming. {.fineprint}
   ```
 
-- The number of stops must equal the number of bullets plus `[video]` lines; the check
-  enforces this.
-- Use the colour constants and the running-example constants at the top of `animations.py`.
-  Scenes render at 1280×720 on the deck background, so they blend into the slide.
-- While working on one scene, render it alone in low quality:
-  `uv run manim -ql --format=mp4 animations.py <SceneClass>`. Use
-  `./scripts/render-animations.sh` for the final files; only that script copies them to
-  `public/media/`.
-- Videos are committed. Rendering does not run in CI: render locally and commit the files
-  from `public/media/`.
-
-### Scene animations (replacing the videos)
-
-The videos are being replaced by scene components animated with anime.js; `next-token`
-and `gpu-memory` are ported. New and reworked animations use scenes.
-
-- One component per animation: `components/anim/<Name>.vue` for `anim: <name>` in the
-  frontmatter (kebab-case → PascalCase). `[anim]` lines work like `[video]` lines; there
-  is no `videoLabel`.
-- The template is an SVG with `viewBox="0 0 1280 720"` holding every element in its
-  initial state (`style="opacity: 0"`, `transform: scaleX(0)`). Name animated elements
-  with `data-part="…"`, not classes: deck classes (`answer`, `prompt`) and UnoCSS
-  utilities would style them. Text styles: `class="muted"`, `class="mono"`.
-- The script builds the timeline with `useSceneTimeline` from `animations/scene.ts` and
-  reads top to bottom like the slide: `tl.add(q("part other"), fadeIn())`, … and ends
-  each step with `tl.label("s1")`, `tl.label("s2")`, … as literal strings — the check
-  counts them against the slide's step lines.
-- Give every tween explicit `[from, to]` values and use the presets in
-  `animations/scene.ts` (`fadeIn`, `fadeOut`, `growFromLeft`, `slideIn`), so seeking
-  backwards, print and the handout all show the right state. `StepAnim.vue` plays forward
-  on a live click and jumps everywhere else.
-- Use `translateX`/`translateY`, not `x`/`y`: on SVG elements anime.js would animate the
-  attributes. Colours come from the CSS tokens (`var(--cyan)`) in `style` bindings.
-- The running example lives in `animations/example.ts`; scenes derive their data from it.
-- Nothing to render: the dev server shows changes immediately.
+- **Template:** an SVG with `class="scene" viewBox="0 0 1280 720"` holding every element
+  in its initial state (`style="opacity: 0"`, `transform: scaleX(0)`). The slide heading
+  already names the topic; do not repeat it inside the scene. Use the space for large text.
+- **Names:** mark animated elements with `data-part="…"`, not classes: deck classes
+  (`answer`, `prompt`) and UnoCSS utilities would style them. `q("prompt blank")` returns
+  every element with one of these parts. Text styles: `class="muted"`, `class="mono"`.
+- **Timeline:** `useSceneTimeline(root, (tl, q) => { … })` from `animations/scene.ts`. The
+  script reads top to bottom like the slide: `tl.add(q("row"), slideIn())`, … and ends
+  each step with `tl.label("s1")`, `tl.label("s2")`, … written as literal strings; the
+  check counts them against the slide's step lines.
+- **Presets** in `animations/scene.ts`: `fadeIn`, `fadeOut`, `slideIn`, `growFromLeft`,
+  `growFromCenter` (needs `style="transform-origin: center"`), `drawIn` for strokes
+  (`tl.add(svg.createDrawable(q("arc")), drawIn())`) and `alongPath` for dots moving along
+  a path. Reuse them before writing raw tweens.
+- **Seeking must work both ways.** Give every tween explicit `[from, to]` values. A drawn
+  line is visible before its step unless it sits in a group that starts at `opacity: 0`.
+  A tween that starts exactly on a label shows its start value at that label; if that
+  value is visible (a ripple starting at opacity 1), precede it with a short fade-in.
+  Several `"<<"` positions in a loop chain onto each other; for parallel tweens take
+  `const start = tl.duration` first and pass that number.
+- **Transforms:** use `translateX`/`translateY`, not `x`/`y` (anime.js would animate the
+  SVG attributes). Tweened transforms work on the element's own box; a static
+  `transform="rotate(…)"` attribute keeps canvas coordinates.
+- **Colours** come from the CSS tokens (`var(--cyan)`) in `style` bindings. anime.js cannot
+  interpolate them; change a colour by crossfading two copies.
+- **Data** of the running example comes from `animations/example.ts`. Mark invented
+  values as illustrative in the slide's fineprint or notes.
+- **Verify** with screenshots of every click state (`#/<slide>?clicks=<n>`, a fresh page per
+  state so the animation has settled) and by clicking forwards and backwards in the
+  browser. When a scene's timeline is needed in the console, set `window.__sceneDebug = true`
+  before loading; `window.__sceneTimelines[<name>]` then holds it.
 
 ## 7. Export and publishing
 
-- **PDF export** runs through Google Chrome (`--executable-path`, overridable with
-  `CHROME_PATH`). The Chromium bundled with Playwright cannot play H.264, so the video
-  frames would be blank.
-- **Handout:** `scripts/export-handout.mjs` writes a temporary deck in which each video
-  slide is repeated once per video stop (bullets cut off after that step, key message and
+- **PDF export** uses the Chromium that Playwright installs; `CHROME_PATH` selects another
+  browser.
+- **Handout:** `scripts/export-handout.mjs` writes a temporary deck in which each animation
+  slide is repeated once per step (bullets cut off after that step, key message and
   notes only on the last copy) and exports it without clicks. Other slides appear once,
-  in their final state. Keep video slides to step lines, key message and fineprint, so
+  in their final state. Keep animation slides to step lines, key message and fineprint, so
   this cut stays correct.
 - **GitHub Pages:** `.github/workflows/pages.yml` runs the strict check on every push and
   pull request and deploys `main`. The site is built with the repository name as base
@@ -437,8 +433,8 @@ and `gpu-memory` are ported. New and reworked animations use scenes.
    Playwright against the dev server, `#/<slide>?clicks=<n>`) with no clicks and with all
    clicks. Check for overlaps, tight spacing, text that wraps badly and elements too close
    to the footer.
-5. On video slides, click forwards and backwards and confirm the video stops where the
-   bullets say.
+5. On animation slides, click forwards and backwards and confirm the animation stops where
+   the bullets say.
 6. Expect review feedback per slide number. Fix the named slide, then check whether the
    same problem exists on other slides and fix it there too.
 7. Put new information where it belongs (see "Where information lives").

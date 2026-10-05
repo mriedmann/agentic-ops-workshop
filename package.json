@@ -8,7 +8,7 @@
     "dev": "slidev --open false",
     "start": "slidev --open false",
     "build": "slidev build",
-    "export": "slidev export --with-clicks --executable-path \"${CHROME_PATH:-$(command -v google-chrome)}\"",
+    "export": "slidev export --with-clicks ${CHROME_PATH:+--executable-path \"$CHROME_PATH\"}",
     "check": "node scripts/check-slides.mjs",
     "check:strict": "node scripts/check-slides.mjs --strict",
     "export:handout": "node scripts/export-handout.mjs"
